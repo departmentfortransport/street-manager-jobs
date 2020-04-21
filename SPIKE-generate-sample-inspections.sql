@@ -55,32 +55,32 @@ INSERT INTO sample_inspection (
 
 (
 -- Category A
-	SELECT
-		work_reference_number || '-SI' AS sample_inspection_reference_number,
-		sample_inspection_target_id,
-		work_id,
-		1 AS inspection_category_id,
-		latest_works_location_description AS works_location_description
-	FROM (
-	    SELECT
-	      work_id,
+  SELECT
+    work_reference_number || '-SI' AS sample_inspection_reference_number,
+    sample_inspection_target_id,
+    work_id,
+    1 AS inspection_category_id,
+    latest_works_location_description AS works_location_description
+  FROM (
+      SELECT
+        work_id,
         work_reference_number,
-	      sample_inspection_to_generate.sample_inspection_target_id,
-	      sample_inspection_to_generate.category_a_to_generate,
-	      organisation_id,
-	      latest_works_location_description,
-	      ROW_NUMBER() OVER(PARTITION BY promoter_organisation_reference) AS row_num
-	    FROM
-	      "work"
-			  JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference -- This JOIN can be removed once SM-5196 is played. Then promoter_organisation_id will be available on the "work" table
-			  JOIN sample_inspection_to_generate ON organisation.organisation_id = sample_inspection_to_generate.promoter_organisation_id
-			  WHERE "work".work_status_id = 2 -- In progress
-			  AND ha_organisation_reference = 'ABC' -- HA org ID will be available to the job
-			  AND "work".work_id NOT IN (
-				  SELECT work_id FROM sample_inspection WHERE inspection_category_id = 1
-			  )
-	) AS eligible_works
-	WHERE row_num <= eligible_works.category_a_to_generate
+        sample_inspection_to_generate.sample_inspection_target_id,
+        sample_inspection_to_generate.category_a_to_generate,
+        organisation_id,
+        latest_works_location_description,
+        ROW_NUMBER() OVER(PARTITION BY promoter_organisation_reference) AS row_num
+      FROM
+        "work"
+        JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference -- This JOIN can be removed once SM-5196 is played. Then promoter_organisation_id will be available on the "work" table
+        JOIN sample_inspection_to_generate ON organisation.organisation_id = sample_inspection_to_generate.promoter_organisation_id
+        WHERE "work".work_status_id = 2 -- In progress
+        AND ha_organisation_reference = 'ABC' -- HA org ID will be available to the job
+        AND "work".work_id NOT IN (
+          SELECT work_id FROM sample_inspection WHERE inspection_category_id = 1
+        )
+  ) AS eligible_works
+  WHERE row_num <= eligible_works.category_a_to_generate
 
 UNION ALL
 
@@ -118,9 +118,9 @@ UNION ALL
 
 -- Category C
   SELECT
-	  work_reference_number || '-SI' AS sample_inspection_reference_number,
-	  sample_inspection_target_id,
-	  work_id,
+    work_reference_number || '-SI' AS sample_inspection_reference_number,
+    sample_inspection_target_id,
+    work_id,
     3 AS inspection_category_id,
     latest_works_location_description AS works_location_description
   FROM (
@@ -134,8 +134,8 @@ UNION ALL
       DENSE_RANK() OVER(PARTITION BY "work".promoter_organisation_reference) AS row_num
     FROM
       "work"
-		  JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference -- This JOIN can be removed once SM-5196 is played. Then promoter_organisation_id will be available on the "work" table
-		  JOIN sample_inspection_to_generate ON organisation.organisation_id = sample_inspection_to_generate.promoter_organisation_id
+      JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference -- This JOIN can be removed once SM-5196 is played. Then promoter_organisation_id will be available on the "work" table
+      JOIN sample_inspection_to_generate ON organisation.organisation_id = sample_inspection_to_generate.promoter_organisation_id
       JOIN permit ON permit.work_id = "work".work_id
       JOIN reinstatement ON reinstatement.permit_id = permit.permit_id
       WHERE reinstatement_status_id = 2
@@ -143,8 +143,8 @@ UNION ALL
       AND reinstatement.end_date <= NOW() + INTERVAL '3 MONTHS'
       AND "work".ha_organisation_reference = 'ABC'
       AND "work".work_id NOT IN (
-				SELECT work_id FROM sample_inspection WHERE inspection_category_id = 3
-			)
+        SELECT work_id FROM sample_inspection WHERE inspection_category_id = 3
+      )
   ) AS eligible_works
   WHERE row_num <= eligible_works.category_c_to_generate
 )
@@ -158,23 +158,23 @@ UNION ALL
 
 -- Category A
 INSERT INTO sample_inspection (sample_inspection_reference_number, sample_inspection_target_id, work_id, inspection_category_id, works_location_description)
-	SELECT
-		CAST(work_id AS VARCHAR) || '-SI' AS sample_inspection_reference_number,
-		sample_inspection_target_id,
-		work_id,
-		1 AS inspection_category_id,
-		latest_works_location_description AS works_location_description
-	FROM (
-	    SELECT
-	        work_id,
-	        sample_inspection_to_generate.sample_inspection_target_id,
-	        sample_inspection_to_generate.category_a_to_generate,
-	        promoter_organisation_reference,
-	        organisation_id,
-	        latest_works_location_description,
-	        ROW_NUMBER() OVER(PARTITION BY promoter_organisation_reference) AS row_num
-	    FROM
-	      "work"
+  SELECT
+    CAST(work_id AS VARCHAR) || '-SI' AS sample_inspection_reference_number,
+    sample_inspection_target_id,
+    work_id,
+    1 AS inspection_category_id,
+    latest_works_location_description AS works_location_description
+  FROM (
+      SELECT
+          work_id,
+          sample_inspection_to_generate.sample_inspection_target_id,
+          sample_inspection_to_generate.category_a_to_generate,
+          promoter_organisation_reference,
+          organisation_id,
+          latest_works_location_description,
+          ROW_NUMBER() OVER(PARTITION BY promoter_organisation_reference) AS row_num
+      FROM
+        "work"
         JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference
         JOIN (
           SELECT
@@ -196,8 +196,8 @@ INSERT INTO sample_inspection (sample_inspection_reference_number, sample_inspec
         AND "work".work_id NOT IN (
           SELECT work_id FROM sample_inspection WHERE inspection_category_id = 1
         )
-	) AS eligible_works
-	WHERE row_num <= eligible_works.category_a_to_generate
+  ) AS eligible_works
+  WHERE row_num <= eligible_works.category_a_to_generate
 
 
 -- Option 3:
@@ -208,40 +208,40 @@ CREATE OR REPLACE FUNCTION generate_sample_inspections(_ha_ref VARCHAR, _ha_id I
 DECLARE
     promoter_targets_to_generate record;
 BEGIN
-	FOR promoter_targets_to_generate IN
+  FOR promoter_targets_to_generate IN
 
-		SELECT
-			sample_inspection_target.sample_inspection_target_id,
-			sample_inspection_target.promoter_organisation_id,
-			cap_category_a - (COUNT(sample_inspection.id) FILTER (WHERE inspection_category_id=1)) AS category_a_to_generate,
-			cap_category_b - (COUNT(sample_inspection.id) FILTER (WHERE inspection_category_id=2)) AS category_b_to_generate,
-			cap_category_c - (COUNT(sample_inspection.id) FILTER (WHERE inspection_category_id=3)) AS category_c_to_generate
-		FROM sample_inspection
-		JOIN "work" ON sample_inspection.work_id = "work".work_id
-		JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference
-		RIGHT JOIN sample_inspection_target ON sample_inspection_target.sample_inspection_target_id = sample_inspection.sample_inspection_target_id
-		WHERE ha_organisation_id = _ha_id
-		GROUP BY sample_inspection_target.sample_inspection_target_id, organisation_id
+    SELECT
+      sample_inspection_target.sample_inspection_target_id,
+      sample_inspection_target.promoter_organisation_id,
+      cap_category_a - (COUNT(sample_inspection.id) FILTER (WHERE inspection_category_id=1)) AS category_a_to_generate,
+      cap_category_b - (COUNT(sample_inspection.id) FILTER (WHERE inspection_category_id=2)) AS category_b_to_generate,
+      cap_category_c - (COUNT(sample_inspection.id) FILTER (WHERE inspection_category_id=3)) AS category_c_to_generate
+    FROM sample_inspection
+    JOIN "work" ON sample_inspection.work_id = "work".work_id
+    JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference
+    RIGHT JOIN sample_inspection_target ON sample_inspection_target.sample_inspection_target_id = sample_inspection.sample_inspection_target_id
+    WHERE ha_organisation_id = _ha_id
+    GROUP BY sample_inspection_target.sample_inspection_target_id, organisation_id
 
   LOOP
     -- Category A
-  	INSERT INTO sample_inspection (sample_inspection_reference_number, sample_inspection_target_id, work_id, inspection_category_id, works_location_description)
-		SELECT
-		    CAST(work_id AS VARCHAR) || '-SI' AS sample_inspection_reference_number,
-	        promoter_targets_to_generate.sample_inspection_target_id,
-	        work_id,
-	        1 AS inspection_category_id,
-	        latest_works_location_description AS works_location_description
-	    FROM
-	        "work"
-			JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference
-			WHERE "work".work_status_id = 2
-			AND ha_organisation_reference = _ha_ref
-			AND organisation.organisation_id = promoter_targets_to_generate.promoter_organisation_id
-			AND "work".work_id NOT IN (
-				SELECT work_id FROM sample_inspection WHERE inspection_category_id = 1
-			)
-		LIMIT promoter_targets_to_generate.category_a_to_generate;
+    INSERT INTO sample_inspection (sample_inspection_reference_number, sample_inspection_target_id, work_id, inspection_category_id, works_location_description)
+    SELECT
+        CAST(work_id AS VARCHAR) || '-SI' AS sample_inspection_reference_number,
+          promoter_targets_to_generate.sample_inspection_target_id,
+          work_id,
+          1 AS inspection_category_id,
+          latest_works_location_description AS works_location_description
+      FROM
+          "work"
+      JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference
+      WHERE "work".work_status_id = 2
+      AND ha_organisation_reference = _ha_ref
+      AND organisation.organisation_id = promoter_targets_to_generate.promoter_organisation_id
+      AND "work".work_id NOT IN (
+        SELECT work_id FROM sample_inspection WHERE inspection_category_id = 1
+      )
+    LIMIT promoter_targets_to_generate.category_a_to_generate;
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
@@ -254,29 +254,29 @@ SELECT generate_sample_inspections('ABC', 123);
 -- Create tables
 
 CREATE TABLE sample_inspection (
-	id 																		SERIAL PRIMARY KEY,
-	sample_inspection_reference_number		VARCHAR,
-	sample_inspection_target_id						INTEGER,
-	work_id																INTEGER,
-	inspection_category_id								INTEGER,
-	works_location_description						VARCHAR
+  id                                     SERIAL PRIMARY KEY,
+  sample_inspection_reference_number     VARCHAR,
+  sample_inspection_target_id            INTEGER,
+  work_id                                INTEGER,
+  inspection_category_id                 INTEGER,
+  works_location_description             VARCHAR
 );
 
 CREATE TABLE sample_inspection_target (
-	sample_inspection_target_id									SERIAL PRIMARY KEY,
-	sample_inspection_target_reference_number		VARCHAR,
-	promoter_organisation_id										INTEGER,
-	ha_organisation_id													INTEGER,
-	agreed_category_a														INTEGER,
-	cap_category_a															INTEGER,
-	passed_category_a														INTEGER,
-	failed_category_a														INTEGER,
-	agreed_category_b														INTEGER,
-	cap_category_b															INTEGER,
-	passed_category_b														INTEGER,
-	failed_category_b														INTEGER,
-	agreed_category_c														INTEGER,
-	cap_category_c															INTEGER,
-	passed_category_c														INTEGER,
-	failed_category_c														INTEGER
+  sample_inspection_target_id                  SERIAL PRIMARY KEY,
+  sample_inspection_target_reference_number    VARCHAR,
+  promoter_organisation_id                     INTEGER,
+  ha_organisation_id                           INTEGER,
+  agreed_category_a                            INTEGER,
+  cap_category_a                               INTEGER,
+  passed_category_a                            INTEGER,
+  failed_category_a                            INTEGER,
+  agreed_category_b                            INTEGER,
+  cap_category_b                               INTEGER,
+  passed_category_b                            INTEGER,
+  failed_category_b                            INTEGER,
+  agreed_category_c                            INTEGER,
+  cap_category_c                               INTEGER,
+  passed_category_c                            INTEGER,
+  failed_category_c                            INTEGER
 );
