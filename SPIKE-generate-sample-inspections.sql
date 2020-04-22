@@ -11,11 +11,35 @@
 --    3. Audits will be added in a separate query in a transaction, as with existing operations
 
 
+-- Conclusion
+--  Using a temp table seems to be the most performant, if this is a possible implementation. This would require Assumption 1
+--  to be true - only generating for one HA at a time - and the HA ID included in temp table name to avoid conflicts. This option
+--  also has the benefit of being more readable, as it separates out the logic for working out the numbers to generate and selecting
+--  the work records - this would be helpful from a maintainability point of view.
+--
+--  Areas for further investigation:
+--
+--  * Selecting distinct work records
+--  For category B and C, a join to the permit and reinstatement tables are required. This can lead to multiple permit/reinstatements
+--  satisfying the conditions, so work ID can appear in the result set multiple times.
+--  These duplicates need removed before the number of work IDs are selected for sample inspections, and this is currently the least
+--  performant part of the query.
+--  Options considered were
+--    - DENSE_RANK() on result set to assign a number to each row with duplicate rows numbered the same. DISTINCT on all columns to remove duplicates
+--    - DENSE_RANK() on result set to assign a number to each row with duplicate rows numbered the same. DISTINCT on all columns to remove duplicates
+--    - DISTINCT on all columns to remove duplicates in subquery. Then select and assign ROW_NUMBER() to each
+--  Performance didn't vary greatly and the first option was most readable.
+--
+--  * Selecting works which do not already have sample inspections.
+--  In the queries below this is done by a NOT IN condition with a nested SELECT from the sample inspection table. It would be
+--  preferable to avoid this nested SELECT if possible.
+
 ------------------------------------------------------------------------------------------------------------------------
 
 
 -- Steps 1 and 2 logic - This is used in the options below
 -- Calculate how many works of each category we need to generate sample inspections for, for each promoter
+-- One row in the result set per sample_inspeciton_target / promoter
 
 SELECT
   sample_inspection_target.sample_inspection_target_id,
@@ -44,6 +68,20 @@ GROUP BY sample_inspection_target.sample_inspection_target_id, organisation_id;
 --
 --    This option appears to be the most performant.
 --    Tested inserting each category in turn rather than unioning. Didn't seem to have much of an impact
+
+CREATE TEMP TABLE sample_inspection_to_generate AS
+	SELECT
+		sample_inspection_target.sample_inspection_target_id,
+		sample_inspection_target.promoter_organisation_id,
+		cap_category_a - (COUNT(sample_inspection.id) FILTER (WHERE inspection_category_id=1)) AS category_a_to_generate,
+		cap_category_b - (COUNT(sample_inspection.id) FILTER (WHERE inspection_category_id=2)) AS category_b_to_generate,
+		cap_category_c - (COUNT(sample_inspection.id) FILTER (WHERE inspection_category_id=3)) AS category_c_to_generate
+	FROM sample_inspection
+	JOIN "work" ON sample_inspection.work_id = "work".work_id
+	JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference
+	RIGHT JOIN sample_inspection_target ON sample_inspection_target.sample_inspection_target_id = sample_inspection.sample_inspection_target_id
+	WHERE ha_organisation_id = 123 -- HA org ID will be available to the job
+	GROUP BY sample_inspection_target.sample_inspection_target_id, organisation_id;
 
 INSERT INTO sample_inspection (
   sample_inspection_reference_number,
@@ -92,7 +130,7 @@ UNION ALL
     2 AS inspection_category_id,
     latest_works_location_description AS works_location_description
   FROM (
-      SELECT DISTINCT -- TODO Check performance of DISTINCT vs DISTINCT subquery with ROW_NUMBER()
+      SELECT DISTINCT
         "work".work_id,
         "work".work_reference_number,
         sample_inspection_to_generate.sample_inspection_target_id,
@@ -124,7 +162,7 @@ UNION ALL
     3 AS inspection_category_id,
     latest_works_location_description AS works_location_description
   FROM (
-    SELECT DISTINCT -- TODO Check performance of DISTINCT vs DISTINCT subquery with ROW_NUMBER()
+    SELECT DISTINCT
       "work".work_id,
       "work".work_reference_number,
       sample_inspection_to_generate.sample_inspection_target_id,
@@ -148,8 +186,6 @@ UNION ALL
   ) AS eligible_works
   WHERE row_num <= eligible_works.category_c_to_generate
 )
-
-
 
 
 -- Option 2:
@@ -233,15 +269,15 @@ BEGIN
           1 AS inspection_category_id,
           latest_works_location_description AS works_location_description
       FROM
-          "work"
-      JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference
-      WHERE "work".work_status_id = 2
-      AND ha_organisation_reference = _ha_ref
-      AND organisation.organisation_id = promoter_targets_to_generate.promoter_organisation_id
-      AND "work".work_id NOT IN (
-        SELECT work_id FROM sample_inspection WHERE inspection_category_id = 1
-      )
-    LIMIT promoter_targets_to_generate.category_a_to_generate;
+        "work"
+        JOIN organisation ON organisation.org_ref = "work".promoter_organisation_reference
+        WHERE "work".work_status_id = 2
+        AND ha_organisation_reference = _ha_ref
+        AND organisation.organisation_id = promoter_targets_to_generate.promoter_organisation_id
+        AND "work".work_id NOT IN (
+          SELECT work_id FROM sample_inspection WHERE inspection_category_id = 1
+        )
+      LIMIT promoter_targets_to_generate.category_a_to_generate;
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
