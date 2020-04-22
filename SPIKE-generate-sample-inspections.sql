@@ -12,10 +12,14 @@
 
 
 -- Conclusion
---  Using a temp table seems to be the most performant, if this is a possible implementation. This would require Assumption 1
+--  Using a temp table (Option 1) seems to be the most performant, if this is a possible implementation. This would require Assumption 1
 --  to be true - only generating for one HA at a time - and the HA ID included in temp table name to avoid conflicts. This option
 --  also has the benefit of being more readable, as it separates out the logic for working out the numbers to generate and selecting
 --  the work records - this would be helpful from a maintainability point of view.
+--
+--  A variation on this would be to use common table expression (WITH ... AS) to calculate amount to generate for each promoter
+--  and category rather than a temp table. This would eliminate the need to create temp tables and possible conflicts or permission
+--  issues, however this option seems to be less performant than using a temp table (possibly around twice as slow)
 --
 --  Areas for further investigation:
 --
@@ -29,6 +33,7 @@
 --    - DENSE_RANK() on result set to assign a number to each row with duplicate rows numbered the same. DISTINCT on all columns to remove duplicates
 --    - DISTINCT on all columns to remove duplicates in subquery. Then select and assign ROW_NUMBER() to each
 --  Performance didn't vary greatly and the first option was most readable.
+--  Possible option: Join reinstatement to site, which has a work_id column, and group by work_id
 --
 --  * Selecting works which do not already have sample inspections.
 --  In the queries below this is done by a NOT IN condition with a nested SELECT from the sample inspection table. It would be
@@ -90,7 +95,6 @@ INSERT INTO sample_inspection (
   inspection_category_id,
   works_location_description
 )
-
 (
 -- Category A
   SELECT
