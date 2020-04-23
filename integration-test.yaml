@@ -1,0 +1,22 @@
+version: "3.3"
+services:
+  postgres:
+    image: 454455319752.dkr.ecr.eu-west-2.amazonaws.com/postgres:postgres-10.10
+    ports:
+      - "5432:5432"
+  jobs:
+    image: ${ECR_URL}/jobs:${CIRCLE_SHA1}
+    depends_on:
+      - postgres
+    environment:
+      - PGHOST=postgres
+      - PGDATABASE=work
+      - PGUSER=app
+      - PGPASSWORD=app
+volumes:
+  etc_postgresql:
+    driver: local
+  var_log_postgresql:
+    driver: local
+  var_lib_postgresql:
+    driver: local

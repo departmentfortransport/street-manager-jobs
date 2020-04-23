@@ -1,0 +1,18 @@
+FROM 454455319752.dkr.ecr.eu-west-2.amazonaws.com/nodejs:alpine-3.11_nodejs-12
+
+RUN apk add --no-cache \
+      g++ \
+      git \
+      make \
+      python
+
+USER nodejs
+
+VOLUME ["/opt/app/dft-street-manager-jobs"]
+
+WORKDIR /opt/app/dft-street-manager-jobs
+
+ENTRYPOINT ["/sbin/tini", "--"]
+
+CMD ["sh", "-c",  "npm set progress=false && npm config set depth 0 && npm install && npm run build && npm run start"]
+

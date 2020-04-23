@@ -1,0 +1,179 @@
+aliases:
+  - &assume_dev_admin_role
+    name: Assume Admin role on dev account
+    command: |
+      unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+      export AWS_ACCESS_KEY_ID="${AWS_MASTER_ACCOUNT_ACCESS_KEY_ID}"
+      export AWS_SECRET_ACCESS_KEY="${AWS_MASTER_ACCOUNT_SECRET_ACCESS_KEY}"
+      TOKEN=$(aws sts assume-role \
+        --role-arn arn:aws:iam::454455319752:role/Dev-Admin \
+        --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
+        )
+      echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
+      echo "export AWS_SECRET_ACCESS_KEY=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["SecretAccessKey"]' 2> /dev/null)" >> $BASH_ENV
+      echo "export AWS_SESSION_TOKEN=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["SessionToken"]' 2> /dev/null)" >> $BASH_ENV
+  - &assume_preprod_admin_role
+    name: Assume role on Preprod account
+    command: |
+      unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_PREPROD}"
+      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_PREPROD}"
+      TOKEN=$(aws sts assume-role \
+        --role-arn arn:aws:iam::${AWS_ACCOUNT_PREPROD}:role/${AWS_ROLE_PREPROD} \
+        --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
+        )
+      echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
+      echo "export AWS_SECRET_ACCESS_KEY=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["SecretAccessKey"]' 2> /dev/null)" >> $BASH_ENV
+      echo "export AWS_SESSION_TOKEN=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["SessionToken"]' 2> /dev/null)" >> $BASH_ENV
+  - &assume_prod_admin_role
+    name: Assume role on Prod account
+    command: |
+      unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_PROD}"
+      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_PROD}"
+      TOKEN=$(aws sts assume-role \
+        --role-arn arn:aws:iam::${AWS_ACCOUNT_PROD}:role/${AWS_ROLE_PROD} \
+        --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
+        )
+      echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
+      echo "export AWS_SECRET_ACCESS_KEY=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["SecretAccessKey"]' 2> /dev/null)" >> $BASH_ENV
+      echo "export AWS_SESSION_TOKEN=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["SessionToken"]' 2> /dev/null)" >> $BASH_ENV
+  - &build_container
+    name: Build Container
+    command: docker build -t ${AWS_ACCOUNT_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} .
+  - &push_dev_ecr
+    name: Push to dev ECR
+    command: docker push ${AWS_ACCOUNT_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+  - &push_preprod_ecr
+    name: Push to preprod ECR
+    command: |
+      docker tag ${AWS_ACCOUNT_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACCOUNT_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker push ${AWS_ACCOUNT_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+  - &push_prod_ecr
+    name: Push to prod ECR
+    command: |
+      docker tag ${AWS_ACCOUNT_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACCOUNT_PROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker push ${AWS_ACCOUNT_PROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+  - &assume_integration-tests-csv-export_role_dev_account
+    name: Assume integration-tests-csv-export role on dev account
+    command: |
+      TOKEN=$(aws sts assume-role \
+        --role-arn arn:aws:iam::454455319752:role/integration-tests-csv-export \
+        --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
+        )
+      echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
+      echo "export AWS_SECRET_ACCESS_KEY=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["SecretAccessKey"]' 2> /dev/null)" >> $BASH_ENV
+      echo "export AWS_SESSION_TOKEN=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["SessionToken"]' 2> /dev/null)" >> $BASH_ENV
+  - &run_integration_tests
+    name: Test integration
+    command: |
+      docker run \
+        -e SSH_PRIV_KEY=$SSH_PRIV_KEY \
+        -e CIRCLE_BRANCH=$CIRCLE_BRANCH \
+        -v /home/circleci/project:/output \
+        -it alpine:latest \
+        sh -l -c "
+          mkdir -p ~/.ssh
+          echo ${SSH_PRIV_KEY} | base64 -d > ~/.ssh/id_rsa
+          chmod 0600 ~/.ssh/id_rsa
+          export GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -F /dev/null'
+          apk add git openssh-client
+          git ls-remote --heads git@github.com:departmentfortransport/street-manager-api.git ${CIRCLE_BRANCH} > /output/git-branch
+          git clone git@github.com:departmentfortransport/street-manager-api.git /output/street-manager-api
+          git checkout ${CIRCLE_BRANCH} || true
+        "
+      docker-compose -f integration-test.yaml up -d
+
+      docker run --network=project_default --link project_postgres_1:postgres ${ECR_URL}/api:$(cat /home/circleci/project/git-branch | grep -v "refs/heads/master" | head -n1 | awk '{print $1}' | grep . || echo 'latest') \
+      sh -c "
+        export PGHOST=postgres
+        export PGPORT=5432
+        export PGUSER=migrator
+        export PGDATABASE=work
+        npm run migrations
+      "
+
+      docker run --network=project_default --link project_postgres_1:postgres \
+      -v /home/circleci/project:/output \
+      -e PGPASSWORD="${PGPASSWORD}" \
+      -it alpine:latest \
+      sh -l -c "
+        apk add --no-cache postgresql-client
+        export PGHOST=postgres
+        export PGPORT=5432
+        export PGUSER=migrator
+        export PGDATABASE=work
+        psql -f /output/street-manager-api/tests/integration/scripts/insert-users.sql
+      "
+
+      docker-compose -f integration-test.yaml run jobs sh -c "npm run test-integration"
+  - &ecr_login
+    name: ECR login
+    command: $(aws ecr get-login --no-include-email --region eu-west-2)
+  - &prepare_ssh_key
+    name: Prepare SSH key
+    command: |
+      mkdir -p .ssh
+      echo ${SSH_PRIV_KEY} | base64 --decode > .ssh/id_rsa
+      chmod 0600 .ssh/id_rsa
+  - &build_and_release
+    name: Build and release
+    command: |
+      source $BASH_ENV
+      docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} .
+      docker push ${ECR_URL}/jobs:${CIRCLE_SHA1}
+
+version: 2.1
+jobs:
+  build:
+    machine:
+      image: circleci/classic:edge
+    steps:
+      - checkout
+      - run: *assume_dev_admin_role
+      - run: *ecr_login
+      - run:
+          name: Test
+          command: |
+            pip install awscli --upgrade --user
+            docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} . --target dependencies --no-cache --pull
+      - run:
+          name: Pull dependencies
+          command: |
+            docker-compose -f integration-test.yaml pull postgres
+      - run: *assume_integration-tests-csv-export_role_dev_account
+      - run: *run_integration_tests
+      - run: *assume_dev_admin_role
+      - run: *build_and_release
+      - run:
+          name: Cleanup
+          command: |
+            rm -rf .ssh
+  tagged_build_and_release:
+    machine: true
+    steps:
+      - checkout
+      - run: *prepare_ssh_key
+      - run: *assume_dev_admin_role
+      - run: *ecr_login
+      - run: *build_container
+      - run: *push_dev_ecr
+      - run: *assume_preprod_admin_role
+      - run: *ecr_login
+      - run: *push_preprod_ecr
+      - run: *assume_prod_admin_role
+      - run: *ecr_login
+      - run: *push_prod_ecr
+
+workflows:
+  tagged_build_and_release:
+    jobs:
+      - tagged_build_and_release:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+  coverage:
+    jobs:
+      - build

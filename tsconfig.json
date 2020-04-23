@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "commonjs",
+    "rootDir": "./src", // needed to preserve dir structure
+    "outDir": "dist",
+    "experimentalDecorators": true,
+    "allowJs": true,
+    "sourceMap": true,
+    "noUnusedLocals": true
+  },
+  "include": [
+    "src/**/*", "tests"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
