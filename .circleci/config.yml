@@ -54,59 +54,63 @@ aliases:
     command: |
       docker tag ${AWS_ACCOUNT_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACCOUNT_PROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
       docker push ${AWS_ACCOUNT_PROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
-  - &assume_integration-tests-csv-export_role_dev_account
-    name: Assume integration-tests-csv-export role on dev account
+  - &assume_jobs-integration-test_role_dev_account
+    name: Assume jobs-integration-test role on dev account
     command: |
       TOKEN=$(aws sts assume-role \
-        --role-arn arn:aws:iam::454455319752:role/integration-tests-csv-export \
+        --role-arn arn:aws:iam::454455319752:role/jobs-integration-test \
         --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
         )
       echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
       echo "export AWS_SECRET_ACCESS_KEY=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["SecretAccessKey"]' 2> /dev/null)" >> $BASH_ENV
       echo "export AWS_SESSION_TOKEN=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["SessionToken"]' 2> /dev/null)" >> $BASH_ENV
-  - &run_integration_tests
-    name: Test integration
+  - &pull_dependencies_integration_tests
+    name: Pull dependencies
     command: |
-      docker run \
-        -e SSH_PRIV_KEY=$SSH_PRIV_KEY \
-        -e CIRCLE_BRANCH=$CIRCLE_BRANCH \
-        -v /home/circleci/project:/output \
-        -it alpine:latest \
-        sh -l -c "
-          mkdir -p ~/.ssh
-          echo ${SSH_PRIV_KEY} | base64 -d > ~/.ssh/id_rsa
-          chmod 0600 ~/.ssh/id_rsa
-          export GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -F /dev/null'
-          apk add git openssh-client
-          git ls-remote --heads git@github.com:departmentfortransport/street-manager-api.git ${CIRCLE_BRANCH} > /output/git-branch
-          git clone git@github.com:departmentfortransport/street-manager-api.git /output/street-manager-api
-          git checkout ${CIRCLE_BRANCH} || true
-        "
-      docker-compose -f integration-test.yaml up -d
+      docker-compose -f integration-test.yaml pull postgres
 
-      docker run --network=project_default --link project_postgres_1:postgres ${ECR_URL}/api:$(cat /home/circleci/project/git-branch | grep -v "refs/heads/master" | head -n1 | awk '{print $1}' | grep . || echo 'latest') \
-      sh -c "
-        export PGHOST=postgres
-        export PGPORT=5432
-        export PGUSER=migrator
-        export PGDATABASE=work
-        npm run migrations
-      "
+      source $BASH_ENV
 
-      docker run --network=project_default --link project_postgres_1:postgres \
-      -v /home/circleci/project:/output \
-      -e PGPASSWORD="${PGPASSWORD}" \
+      docker run -d \
+      --name clone \
+      -v $pwd:/tmp \
+      -e SSH_PRIV_KEY=$SSH_PRIV_KEY \
       -it alpine:latest \
       sh -l -c "
-        apk add --no-cache postgresql-client
-        export PGHOST=postgres
-        export PGPORT=5432
-        export PGUSER=migrator
-        export PGDATABASE=work
-        psql -f /output/street-manager-api/tests/integration/scripts/insert-users.sql
+        mkdir -p ~/.ssh
+        mkdir /tmp/clone
+        echo ${SSH_PRIV_KEY} | base64 -d > ~/.ssh/id_rsa
+        chmod 0600 ~/.ssh/id_rsa
+        export GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -F /dev/null'
+        apk add git openssh-client
+        git config --global user.name streetmanagerops
+        git config --global user.email streetmanagerops@kainos.com
+        git clone git@github.com:departmentfortransport/street-manager-data.git /tmp/street-manager-data
+        cd /tmp/street-manager-data
+        git checkout ${CIRCLE_BRANCH} || git checkout master
+        git rev-parse HEAD > /tmp/clone/db-migrations-image.txt
+        cp -R resources /tmp/clone/resources
+        cd -
       "
+      docker wait clone
+      docker cp clone:/tmp/clone ~/project/clone
+  - &run_integration_tests
+    name: Test integration
+      command: |
+        export DB_MIGRATIONS_IMAGE=$(cat clone/db-migrations-image.txt)
 
-      docker-compose -f integration-test.yaml run jobs sh -c "npm run test-integration"
+        docker-compose -f integration-test.yaml up -d
+
+        docker wait project_db-migrations_1
+
+        docker-compose -f integration-test.yaml run jobs sh -c "npm run test-integration"
+
+        rm -rf clone
+  - &test
+    name: Test
+      command: |
+        pip install awscli --upgrade --user
+        docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} . --target dependencies --no-cache --pull
   - &ecr_login
     name: ECR login
     command: $(aws ecr get-login --no-include-email --region eu-west-2)
@@ -122,6 +126,10 @@ aliases:
       source $BASH_ENV
       docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} .
       docker push ${ECR_URL}/jobs:${CIRCLE_SHA1}
+  - &cleanup
+    name: Cleanup
+    command: |
+      rm -rf .ssh
 
 version: 2.1
 jobs:
@@ -132,23 +140,13 @@ jobs:
       - checkout
       - run: *assume_dev_admin_role
       - run: *ecr_login
-      - run:
-          name: Test
-          command: |
-            pip install awscli --upgrade --user
-            docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} . --target dependencies --no-cache --pull
-      - run:
-          name: Pull dependencies
-          command: |
-            docker-compose -f integration-test.yaml pull postgres
-      - run: *assume_integration-tests-csv-export_role_dev_account
+      - run: *test
+      - run: *assume_jobs-integration-test_role_dev_account
+      - run: *pull_dependencies_integration_tests
       - run: *run_integration_tests
       - run: *assume_dev_admin_role
       - run: *build_and_release
-      - run:
-          name: Cleanup
-          command: |
-            rm -rf .ssh
+      - run: *cleanup
   tagged_build_and_release:
     machine: true
     steps:
