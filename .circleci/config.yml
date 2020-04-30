@@ -96,21 +96,21 @@ aliases:
       docker cp clone:/tmp/clone ~/project/clone
   - &run_integration_tests
     name: Test integration
-      command: |
-        export DB_MIGRATIONS_IMAGE=$(cat clone/db-migrations-image.txt)
+    command: |
+      export DB_MIGRATIONS_IMAGE=$(cat clone/db-migrations-image.txt)
 
-        docker-compose -f integration-test.yaml up -d
+      docker-compose -f integration-test.yaml up -d
 
-        docker wait project_db-migrations_1
+      docker wait project_db-migrations_1
 
-        docker-compose -f integration-test.yaml run jobs sh -c "npm run test-integration"
+      docker-compose -f integration-test.yaml run jobs sh -c "npm run test-integration"
 
-        rm -rf clone
+      rm -rf clone
   - &test
     name: Test
-      command: |
-        pip install awscli --upgrade --user
-        docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} . --target dependencies --no-cache --pull
+    command: |
+      pip install awscli --upgrade --user
+      docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} . --target dependencies --no-cache --pull
   - &ecr_login
     name: ECR login
     command: $(aws ecr get-login --no-include-email --region eu-west-2)
