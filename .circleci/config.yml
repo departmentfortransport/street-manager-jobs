@@ -58,7 +58,7 @@ aliases:
     name: Assume jobs-integration-test role on dev account
     command: |
       TOKEN=$(aws sts assume-role \
-        --role-arn arn:aws:iam::454455319752:role/jobs-integration-test \
+        --role-arn arn:aws:iam::454455319752:role/integration-tests-csv-export \
         --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
         )
       echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
