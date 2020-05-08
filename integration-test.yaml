@@ -7,7 +7,7 @@ services:
   jobs:
     image: ${ECR_URL}/jobs:${CIRCLE_SHA1}
     depends_on:
-      - postgres
+      - db-migrations
     environment:
       - PGHOST=postgres
       - PGDATABASE=work

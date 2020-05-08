@@ -8,7 +8,7 @@
     "job-1": "node ./dist/job-1/app.js",
     "test": "TZ=UTC npm run lint && nyc npm run test-unit",
     "test-unit": "TZ=UTC mocha 'tests/unit/**/*.ts' --require ts-node/register",
-    "test-integration": "npm run test-unit"
+    "test-integration": "mocha 'tests/integration/**/*.ts' --require ts-node/register --exit --timeout 15000"
   },
   "repository": {
     "type": "git",

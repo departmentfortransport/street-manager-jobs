@@ -1,5 +1,4 @@
 import 'mocha'
-import { assert } from 'chai'
 import { mock, instance, verify, anything } from 'ts-mockito'
 import Job1Service from '../../../../src/job-1/services/job1Service'
 import Logger from '../../../../src/common/utils/logger'
@@ -39,8 +38,7 @@ describe('Job1Service', () => {
       verify(logger.log('Jimmys winning games')).once()
       verify(logger.log('456')).once()
       verify(logger.log(JOB_1_STR_FIELD)).once()
-
-      assert.isTrue(true)
+      verify(dao.getJob1DataModel()).called()
     })
   })
 })
