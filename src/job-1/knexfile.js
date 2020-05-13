@@ -1,6 +1,6 @@
 import { PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE, PGSSL, PGMINPOOLSIZE, PGMAXPOOLSIZE } from './config'
 
-export default {
+const knexConfig = {
   client: 'pg',
   connection: {
     host: PGHOST,
@@ -15,3 +15,11 @@ export default {
     max: Number(PGMAXPOOLSIZE)
   }
 }
+
+if (Boolean(PGSSL)) {
+  knexConfig.development.connection.ssl = {
+    rejectUnauthorized: false
+  }
+}
+
+module.exports = knexConfig
