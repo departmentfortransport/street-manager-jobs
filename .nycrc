@@ -1,0 +1,15 @@
+{
+  "extension": [
+    ".ts"
+  ],
+  "exclude": [
+    "src/*/daos/*",
+    "tests/*"
+  ],
+  "reporter": [
+    "text-summary",
+    "text",
+    "html"
+  ],
+  "temp-directory": "./coverage/.nyc_output"
+}
