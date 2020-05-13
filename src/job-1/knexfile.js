@@ -17,7 +17,7 @@ const knexConfig = {
 }
 
 if (Boolean(PGSSL)) {
-  knexConfig.development.connection.ssl = {
+  knexConfig.connection.ssl = {
     rejectUnauthorized: false
   }
 }
