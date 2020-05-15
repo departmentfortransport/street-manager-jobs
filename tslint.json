@@ -37,7 +37,7 @@
     "no-arg": true,
     "no-bitwise": false,
     "no-conditional-assignment": true,
-    "no-consecutive-blank-lines": false,
+    "no-consecutive-blank-lines": true,
     "no-construct": true,
     "no-constructor-vars": false,
     "no-debugger": true,
@@ -72,6 +72,7 @@
     "radix": true,
     "semicolon": [true, "never"],
     "switch-default": true,
+    "prefer-const": true,
     "triple-equals": [
       true,
       "allow-null-check"
@@ -107,6 +108,13 @@
       "check-operator",
       "check-separator",
       "check-type"
+    ],
+    "trailing-comma": [
+      true,
+      {
+        "multiline": "never",
+        "singleline": "never"
+      }
     ]
   }
 }
