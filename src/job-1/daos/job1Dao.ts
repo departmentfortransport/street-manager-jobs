@@ -14,7 +14,7 @@ export default class Job1Dao {
     'csv_export.date_completed',
     'csv_export.csv_export_status_id',
     'csv_export.user_id',
-    'csv_export.organisation_reference',
+    'csv_export.organisation_id',
     'csv_export.filters',
     'csv_export.csv_export_type'
   ]
