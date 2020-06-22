@@ -1,4 +1,5 @@
-FROM 454455319752.dkr.ecr.eu-west-2.amazonaws.com/nodejs:alpine-3.11_nodejs-12 AS base
+ARG JOBS_IMAGE
+FROM $JOBS_IMAGE AS base
 
 RUN apk upgrade --no-cache && \
       mkdir -p /opt/app/dft-street-manager-jobs
@@ -14,11 +15,17 @@ COPY package-lock.json .
 FROM base AS dependencies
 
 RUN apk add --no-cache \
+      git \
       g++ \
       make \
+      openssh-client \
       python
 
 COPY . .
+
+RUN mkdir ~/.ssh && \
+  ssh-keyscan github.com > ~/.ssh/known_hosts && \
+  cp .ssh/id_rsa ~/.ssh/id_rsa
 
 RUN npm set progress=false && \
       npm config set depth 0 && \
