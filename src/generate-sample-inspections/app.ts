@@ -1,11 +1,11 @@
 import 'reflect-metadata'
 import * as Knex from 'knex'
-import { JOB_1_ID } from './config'
+import { GENERATE_SAMPLE_INSPECTIONS_JOB_ID } from './config'
 import iocContainer from './ioc'
 import TYPES from './types'
-import Job1Job from './job'
+import GenerateSampleInspectionsJob from './job'
 
-const job1Id: number = Number(JOB_1_ID)
+const jobId: number = Number(GENERATE_SAMPLE_INSPECTIONS_JOB_ID)
 
 process.on('SIGTERM', async () => await destroyKnex())
 
@@ -13,7 +13,7 @@ run()
 
 async function run(): Promise<void> {
   try {
-    await iocContainer.get<Job1Job>(TYPES.Job1Job).run(job1Id)
+    await iocContainer.get<GenerateSampleInspectionsJob>(TYPES.GenerateSampleInspectionsJob).run(jobId)
     await destroyKnex()
   } catch (err) {
     console.error(err)

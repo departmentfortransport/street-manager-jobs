@@ -40,7 +40,7 @@ aliases:
       echo "export AWS_SESSION_TOKEN=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["SessionToken"]' 2> /dev/null)" >> $BASH_ENV
   - &build_container
     name: Build Container
-    command: docker build -t ${AWS_ACCOUNT_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} .
+    command: docker build -t ${AWS_ACCOUNT_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} --build-arg JOBS_IMAGE=${JOBS_IMAGE} .
   - &push_dev_ecr
     name: Push to dev ECR
     command: docker push ${AWS_ACCOUNT_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
@@ -110,7 +110,7 @@ aliases:
     name: Test
     command: |
       pip install awscli --upgrade --user
-      docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} . --target dependencies --no-cache --pull
+      docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} --build-arg JOBS_IMAGE=${JOBS_IMAGE} . --target dependencies --no-cache --pull
   - &ecr_login
     name: ECR login
     command: $(aws ecr get-login --no-include-email --region eu-west-2)
@@ -124,7 +124,7 @@ aliases:
     name: Build and release
     command: |
       source $BASH_ENV
-      docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} .
+      docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} --build-arg JOBS_IMAGE=${JOBS_IMAGE} .
       docker push ${ECR_URL}/jobs:${CIRCLE_SHA1}
   - &cleanup
     name: Cleanup
@@ -140,6 +140,7 @@ jobs:
       - checkout
       - run: *assume_dev_admin_role
       - run: *ecr_login
+      - run: *prepare_ssh_key
       - run: *test
       - run: *assume_jobs-integration-test_role_dev_account
       - run: *pull_dependencies_integration_tests

@@ -1,8 +1,6 @@
 module.exports = {
   // App
-  JOB_1_ID: process.env.JOB_1_ID,
-  JOB_1_INT_FIELD: process.env.JOB_1_INT_FIELD,
-  JOB_1_STR_FIELD: process.env.JOB_1_STR_FIELD,
+  GENERATE_SAMPLE_INSPECTIONS_JOB_ID: process.env.GENERATE_SAMPLE_INSPECTIONS_JOB_ID,
 
   // DB
   PGHOST: process.env.PGHOST || 'localhost',

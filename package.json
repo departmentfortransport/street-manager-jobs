@@ -6,7 +6,7 @@
     "clean": "rimraf dist",
     "lint": "tslint --project tslint.json --exclude 'prod_node_modules/**'",
     "lint-fix": "tslint --project tslint.json --exclude 'node_modules/**' --exclude 'prod_node_modules/**' --fix",
-    "job-1": "node ./dist/job-1/app.js",
+    "generate-sample-inspections": "node ./dist/generate-sample-inspections/app.js",
     "test": "TZ=UTC npm run lint && nyc npm run test-unit",
     "test-unit": "TZ=UTC mocha 'tests/unit/**/*.ts' --require ts-node/register",
     "test-integration": "mocha 'tests/integration/**/*.ts' --require ts-node/register --exit --timeout 15000"
@@ -21,7 +21,8 @@
     "knex": "^0.20.11",
     "knex-postgis": "^0.12.0",
     "pg": "^8.0.3",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "street-manager-data": "git+ssh://git@github.com:departmentfortransport/street-manager-data#6bb883d5db592b119cfd1a2581ceaa4082c5ff86"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
