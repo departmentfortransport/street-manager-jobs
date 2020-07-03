@@ -22,7 +22,7 @@
     "knex-postgis": "^0.12.0",
     "pg": "^8.0.3",
     "reflect-metadata": "^0.1.13",
-    "street-manager-data": "git+ssh://git@github.com:departmentfortransport/street-manager-data#6bb883d5db592b119cfd1a2581ceaa4082c5ff86"
+    "street-manager-data": "git+ssh://git@github.com:departmentfortransport/street-manager-data#18c13a6b1d2c20aa0c4e9c15e30c040b22ea4fe0"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
