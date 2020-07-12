@@ -1,5 +1,5 @@
-import { AsyncJob } from 'street-manager-data'
 import * as Knex from 'knex'
+import { AsyncJob } from 'street-manager-data'
 
 export async function insertJobs(knex: Knex, ...jobs: AsyncJob[]): Promise<number[]> {
   return await knex('async_job').insert(jobs).returning('async_job_id')
