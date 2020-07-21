@@ -3,8 +3,7 @@
 Node scripts for asynchronous tasks utilised by street manager. These tasks, known as jobs, are outlined below:
 
 ## Jobs
-1. job-1 - This is an example job.
-
+1. generate-sample-inspections - Generates sample inspection records for a given HA organisation. The number of sample inspections generated is based on the sample inspection targets set by the HA.
 
 ## Repo Structure and Rules
 * Jobs are split by directory i.e. `src/job-1/**`, `src/job-2/**`
@@ -18,10 +17,11 @@ Jobs are executed through the [Worker](https://github.com/departmentfortransport
 
 Jobs can also be ran ad-hoc using the steps outlined below. Some jobs may require additional setup depending on their function.
 
-### To run example job locally
+### To run job locally
 ```
+$ export GENERATE_SAMPLE_INSPECTIONS_JOB_ID={JOB ID from async_job table}
 $ npm run build
-$ npm run job-1
+$ npm run generate-sample-inspections
 ```
 
 ### To run on Kubernetes
@@ -53,7 +53,7 @@ export const JOBS_TAG = 'bf07bcb8ed2a16aa7765b2fb2de4f7628dd07ccd'
 ### Release process
 
 1. Raise PR in street-manager-jobs
-2. Code review approved by 2 teams
+2. Code review approved by 2 team members
 3. Code is merged to master
 4. Checkout master and pull latest code
 5. Once build is green, code owner creates a tag for the new job `git tag -a v1.1.PATCH_VERSION -m "Description of Job change"` and pushes it `git push --tags`

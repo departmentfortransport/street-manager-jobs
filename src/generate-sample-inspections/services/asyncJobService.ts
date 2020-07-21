@@ -9,7 +9,13 @@ import { AsyncJobUpdateData } from '../models/AsyncJob'
 export default class AsyncJobService {
 
   public constructor(
-    @inject(TYPES.AsyncJobDao) private dao: AsyncJobDao) {}
+    @inject(TYPES.AsyncJobDao) private dao: AsyncJobDao
+  ) {}
+
+  public async getJobOrganisation(jobId: number): Promise<number> {
+    const job = await this.dao.getJob(jobId)
+    return job.organisation_id
+  }
 
   public async markAsInProgress(jobId: number): Promise<void> {
     const updateData: AsyncJobUpdateData = { async_job_status_id: RefAsyncJobStatus.in_progress }

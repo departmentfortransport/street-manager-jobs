@@ -12,6 +12,7 @@ const TYPES = {
 
   // DAOs
   AsyncJobDao: Symbol.for('AsyncJobDao'),
+  SampleInspectionDao: Symbol.for('SampleInspectionDao'),
 
   // Services
   GenerateSampleInspectionsService: Symbol.for('GenerateSampleInspectionsService'),

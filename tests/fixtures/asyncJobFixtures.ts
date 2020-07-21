@@ -1,6 +1,6 @@
 import { AsyncJob, RefAsyncJobStatus, AsyncJobTypeEnum } from 'street-manager-data'
 
-export function generateAsyncJob(jobId: number, type: AsyncJobTypeEnum, userId = 4, organisationId = 20): AsyncJob {
+export function generateAsyncJob(jobId: number, type: AsyncJobTypeEnum, organisationId = 20, userId = 4): AsyncJob {
   return {
     async_job_id: jobId,
     date_created: new Date(),

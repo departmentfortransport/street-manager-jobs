@@ -1,11 +1,12 @@
 import 'mocha'
 import { assert } from 'chai'
-import { mock, instance, verify, anything, capture } from 'ts-mockito'
-import { RefAsyncJobStatus } from 'street-manager-data'
+import { ArgCaptor2 } from 'ts-mockito/lib/capture/ArgCaptor'
+import { mock, instance, verify, anything, capture, when } from 'ts-mockito'
+import { RefAsyncJobStatus, AsyncJob, AsyncJobTypeEnum } from 'street-manager-data'
 import AsyncJobService from '../../../../src/generate-sample-inspections/services/asyncJobService'
 import AsyncJobDao from '../../../../src/generate-sample-inspections/daos/asyncJobDao'
-import { ArgCaptor2 } from 'ts-mockito/lib/capture/ArgCaptor'
 import { AsyncJobUpdateData } from '../../../../src/generate-sample-inspections/models/AsyncJob'
+import { generateAsyncJob } from '../../../fixtures/asyncJobFixtures'
 
 describe('AsyncJobService', () => {
 
@@ -14,11 +15,24 @@ describe('AsyncJobService', () => {
   let dao: AsyncJobDao
 
   const JOB_ID = 123
+  const JOB: AsyncJob = generateAsyncJob(JOB_ID, AsyncJobTypeEnum.GENERATE_SAMPLE_INSPECTION)
 
   beforeEach(() => {
     dao = mock(AsyncJobDao)
 
     service = new AsyncJobService(instance(dao))
+  })
+
+  describe('getJobOrganisation', () => {
+    it('should return the organisation ID from the job', async () => {
+      when(dao.getJob(JOB_ID)).thenResolve(JOB)
+
+      const organisationID: number = await service.getJobOrganisation(JOB_ID)
+
+      verify(dao.getJob(JOB_ID)).once()
+
+      assert.equal(organisationID, JOB.organisation_id)
+    })
   })
 
   describe('markAsInProgress', () => {
@@ -35,7 +49,7 @@ describe('AsyncJobService', () => {
     })
   })
 
-  describe('markAsReady', () => {
+  describe('markAsComplete', () => {
     it('should update the CSV record to ready and also set the date completed', async () => {
       await service.markAsComplete(JOB_ID)
 
