@@ -56,8 +56,6 @@ export const JOBS_TAG = 'bf07bcb8ed2a16aa7765b2fb2de4f7628dd07ccd'
 2. Code review approved by 2 team members
 3. Code is merged to master
 4. Checkout master and pull latest code
-5. Once build is green, code owner creates a tag for the new job `git tag -a v1.1.PATCH_VERSION -m "Description of Job change"` and pushes it `git push --tags`
+5. Once build is green, code owner creates a tag for the new job `git tag -a v<PHASE>.<SPRINT>.<PATCH_VERSION> -m "Description of Job change"` and pushes it `git push --tags`
 6. CircleCI will push the new tag to dev, pre-prod and production ECRs
 7. Update tag in Worker [here](https://github.com/departmentfortransport/street-manager-worker/blob/master/src/config.ts#L2)
-
-Note: A minor version should be bumped if a new job is added, for bug fixing or extensions just update the patch version.
