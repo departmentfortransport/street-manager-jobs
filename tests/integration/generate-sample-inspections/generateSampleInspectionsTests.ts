@@ -145,13 +145,15 @@ describe('Generate Sample Inspections Job', () => {
   before(async () => {
     await insertJobs(knex, generateAsyncJob(JOB_ID, AsyncJobTypeEnum.GENERATE_SAMPLE_INSPECTION, haOrganisationId))
 
-    inactiveSampleInspectionTargetIds = await insertSampleInspectionTarget(knex,
+    inactiveSampleInspectionTargetIds = await insertSampleInspectionTarget(
+      knex,
       { ...generateSampleInspectionTarget(TARGET_REF_NUM_PREFIX + '01', haOrganisationId, smokePlannerOrganisationId), is_active_target: false }
     )
 
     activeSampleInspectionTarget = generateSampleInspectionTarget(TARGET_REF_NUM_PREFIX + '02', haOrganisationId, smokePlannerOrganisationId)
 
-    activeSampleInspectionTargetIds = await insertSampleInspectionTarget(knex,
+    activeSampleInspectionTargetIds = await insertSampleInspectionTarget(
+      knex,
       activeSampleInspectionTarget,
       generateSampleInspectionTarget(TARGET_REF_NUM_PREFIX + '03', haOrganisationId, c2cPlannerOrganisationId),
       generateSampleInspectionTarget(TARGET_REF_NUM_PREFIX_OTHER_HA + '04', dorsetHAOrganisationId, smokePlannerOrganisationId)
@@ -184,20 +186,24 @@ describe('Generate Sample Inspections Job', () => {
       work3 = generateIntegrationTestWork(WORK_3_WRN)
       work4 = generateIntegrationTestWork(WORK_4_WRN, RefWorkStatus.in_progress)
 
-      workIds = await insertWork(knex, postgis,
+      workIds = await insertWork(
+        knex,
+        postgis,
         work1,
         work2,
         work3,
         work4
       )
 
-      siteIds = await insertSite(knex,
+      siteIds = await insertSite(
+        knex,
         generateSite(workIds[1]),
         generateSite(workIds[2]),
         generateSite(workIds[3])
       )
 
-      reinstatementIds = await insertReinstatement(knex, postgis,
+      reinstatementIds = await insertReinstatement(
+        knex, postgis,
         generateReinstatement(siteIds[0], TWO_MONTHS_AGO, FOUR_MONTHS_FROM_NOW),
         generateReinstatement(siteIds[1], SEVEN_MONTHS_AGO, TWO_MONTHS_FROM_NOW),
         generateReinstatement(siteIds[2], TWO_MONTHS_AGO, TWO_MONTHS_FROM_NOW)
@@ -241,7 +247,9 @@ describe('Generate Sample Inspections Job', () => {
       workAOtherPromoter = generateIntegrationTestWork(CATEGORY_A_WRN_OTHER_PROMOTER, RefWorkStatus.in_progress, c2cPlannerOrganisationId, haOrganisationId)
       workANoEndDate = { ...generateIntegrationTestWork(CATEGORY_A_WRN_NO_END_DATE, RefWorkStatus.in_progress, c2cPlannerOrganisationId, haOrganisationId), work_end_date: null }
 
-      categoryAWorkIds = await insertWork(knex, postgis,
+      categoryAWorkIds = await insertWork(
+        knex,
+        postgis,
         workCategoryA,
         workAWithScheduledInspection,
         workAWithCategoryASampleInspection,
@@ -251,7 +259,8 @@ describe('Generate Sample Inspections Job', () => {
         workANoEndDate
       )
 
-      await insertReinspection(knex,
+      await insertReinspection(
+        knex,
         generateReinspection(categoryAWorkIds[1], CATEGORY_A_WRN_WITH_SCHEDULED_INSPECTION)
       )
     })
@@ -265,7 +274,8 @@ describe('Generate Sample Inspections Job', () => {
     })
 
     it('for works that do not already have a category A sample inspection', async () => {
-      await insertSampleInspection(knex,
+      await insertSampleInspection(
+        knex,
         generateSampleInspection(categoryAWorkIds[2] + 'SI-A', categoryAWorkIds[2], inactiveSampleInspectionTargetIds[0])
       )
 
@@ -308,11 +318,13 @@ describe('Generate Sample Inspections Job', () => {
     })
 
     it('for the cap amount defined in the target', async () => {
-      await insertSampleInspection(knex,
+      await insertSampleInspection(
+        knex,
         { ...generateSampleInspection(categoryAWorkIds[0] + 'SI-A'), work_id: categoryAWorkIds[0], sample_inspection_target_id: activeSampleInspectionTargetIds[0] }
       )
 
-      const moreWorkIds: number[] = await insertWork(knex, postgis,
+      const moreWorkIds: number[] = await insertWork(
+        knex, postgis,
         generateIntegrationTestWork(CATEGORY_A_WRN + '1', RefWorkStatus.in_progress),
         generateIntegrationTestWork(CATEGORY_A_WRN + '2', RefWorkStatus.in_progress),
         generateIntegrationTestWork(CATEGORY_A_WRN + '3', RefWorkStatus.in_progress),
@@ -346,7 +358,9 @@ describe('Generate Sample Inspections Job', () => {
       workBOtherPromoter = generateIntegrationTestWork(CATEGORY_B_WRN_OTHER_PROMOTER, RefWorkStatus.planned, c2cPlannerOrganisationId, haOrganisationId)
       workBWithMultipleSites = generateIntegrationTestWork(CATEGORY_B_WRN_MULTIPLE_SITES)
 
-      categoryBWorkIds = await insertWork(knex, postgis,
+      categoryBWorkIds = await insertWork(
+        knex,
+        postgis,
         workCategoryB,
         workBWithScheduledInspection,
         workBWithCategoryASampleInspection,
@@ -359,7 +373,8 @@ describe('Generate Sample Inspections Job', () => {
         workBWithMultipleSites
       )
 
-      categoryBSiteIds = await insertSite(knex,
+      categoryBSiteIds = await insertSite(
+        knex,
         generateSite(categoryBWorkIds[0]),
         generateSite(categoryBWorkIds[0]),
         generateSite(categoryBWorkIds[1]),
@@ -380,7 +395,8 @@ describe('Generate Sample Inspections Job', () => {
       reinstatementCategoryBMoreRecent = generateReinstatement(categoryBSiteIds[10], ONE_WEEK_AGO)
       reinstatementCategoryBMostRecentButInactive = { ...generateReinstatement(categoryBSiteIds[9], ONE_DAY_AGO), is_active_reinstatement: false }
 
-      categoryBReinstatementIds = await insertReinstatement(knex, postgis,
+      categoryBReinstatementIds = await insertReinstatement(
+        knex, postgis,
         reinstatementCategoryB,
         generateReinstatement(categoryBSiteIds[1], TWO_MONTHS_AGO),
         reinstatementCategoryBWithCategoryASampleInspection,
@@ -396,7 +412,8 @@ describe('Generate Sample Inspections Job', () => {
         reinstatementCategoryBMostRecentButInactive
       )
 
-      await insertReinspection(knex,
+      await insertReinspection(
+        knex,
         generateReinspection(categoryBWorkIds[1], CATEGORY_B_WRN_WITH_SCHEDULED_INSPECTION)
       )
     })
@@ -410,10 +427,11 @@ describe('Generate Sample Inspections Job', () => {
     })
 
     it('for works that do not already have a category B sample inspection', async () => {
-    await insertSampleInspection(knex,
-      generateSampleInspection(categoryBWorkIds[2] + '-SI-B', categoryBWorkIds[2], inactiveSampleInspectionTargetIds[0]),
-      { ...generateSampleInspection(categoryBWorkIds[3] + '-SI-B', categoryBWorkIds[3], inactiveSampleInspectionTargetIds[0]), inspection_category_id: RefInspectionCategory.b }
-    )
+      await insertSampleInspection(
+        knex,
+        generateSampleInspection(categoryBWorkIds[2] + '-SI-B', categoryBWorkIds[2], inactiveSampleInspectionTargetIds[0]),
+        { ...generateSampleInspection(categoryBWorkIds[3] + '-SI-B', categoryBWorkIds[3], inactiveSampleInspectionTargetIds[0]), inspection_category_id: RefInspectionCategory.b }
+      )
 
       const sampleInspections: Dictionary<SampleInspection> = await runJobAndGetGeneratedSampleInspections([CATEGORY_B_ID])
 
@@ -456,11 +474,13 @@ describe('Generate Sample Inspections Job', () => {
     })
 
     it('for the cap amount defined in the target', async () => {
-      await insertSampleInspection(knex,
+      await insertSampleInspection(
+        knex,
         { ...generateSampleInspection(categoryBWorkIds[0] + '-SI-B'), work_id: categoryBWorkIds[0], sample_inspection_target_id: activeSampleInspectionTargetIds[0], inspection_category_id: RefInspectionCategory.b }
       )
 
-      const moreValidCategoryBWorkIds = await insertWork(knex, postgis,
+      const moreValidCategoryBWorkIds = await insertWork(
+        knex, postgis,
         generateIntegrationTestWork(CATEGORY_B_WRN + '1', RefWorkStatus.planned),
         generateIntegrationTestWork(CATEGORY_B_WRN + '2', RefWorkStatus.planned),
         generateIntegrationTestWork(CATEGORY_B_WRN + '3', RefWorkStatus.planned),
@@ -468,7 +488,8 @@ describe('Generate Sample Inspections Job', () => {
       )
       categoryBWorkIds.push(...moreValidCategoryBWorkIds)
 
-      const moreSiteIds: number[] = await insertSite(knex,
+      const moreSiteIds: number[] = await insertSite(
+        knex,
         generateSite(moreValidCategoryBWorkIds[0]),
         generateSite(moreValidCategoryBWorkIds[1]),
         generateSite(moreValidCategoryBWorkIds[2]),
@@ -476,7 +497,8 @@ describe('Generate Sample Inspections Job', () => {
       )
       categoryBSiteIds.push(...moreSiteIds)
 
-      const moreReinstatementIds: number[] = await insertReinstatement(knex, postgis,
+      const moreReinstatementIds: number[] = await insertReinstatement(
+        knex, postgis,
         generateReinstatement(moreSiteIds[0], TWO_MONTHS_AGO),
         generateReinstatement(moreSiteIds[1], TWO_MONTHS_AGO),
         generateReinstatement(moreSiteIds[2], TWO_MONTHS_AGO),
@@ -520,7 +542,8 @@ describe('Generate Sample Inspections Job', () => {
       workCWithMultipleSites = generateIntegrationTestWork(CATEGORY_C_WRN_MULTIPLE_SITES)
       workCWithInterimReinstatement = generateIntegrationTestWork(CATEGORY_C_WITH_INTERIM_REINSTATEMENT)
 
-      categoryCWorkIds = await insertWork(knex, postgis,
+      categoryCWorkIds = await insertWork(
+        knex, postgis,
         workCategoryC,
         workCWithScheduledInspection,
         workCWithCategoryASampleInspection,
@@ -535,7 +558,8 @@ describe('Generate Sample Inspections Job', () => {
         workCWithInterimReinstatement
       )
 
-      categoryCSiteIds = await insertSite(knex,
+      categoryCSiteIds = await insertSite(
+        knex,
         generateSite(categoryCWorkIds[0]),
         generateSite(categoryCWorkIds[0]),
         generateSite(categoryCWorkIds[1]),
@@ -558,7 +582,8 @@ describe('Generate Sample Inspections Job', () => {
       reinstatementCategoryCMostRecentButInactive = { ...generateReinstatement(categoryCSiteIds[11], SEVEN_MONTHS_AGO, TWO_MONTHS_AND_TWO_WEEKS_FROM_NOW), is_active_reinstatement: false }
       reinstatementCategoryCMostRecentButInterim = { ...generateReinstatement(categoryCSiteIds[11], SEVEN_MONTHS_AGO, TWO_MONTHS_AND_TWO_WEEKS_FROM_NOW), is_active_reinstatement: false, reinstatement_status_id: RefReinstatementStatus.interim }
 
-      categoryCReinstatementIds = await insertReinstatement(knex, postgis,
+      categoryCReinstatementIds = await insertReinstatement(
+        knex, postgis,
         reinstatementCategoryC,
         generateReinstatement(categoryCSiteIds[1], SEVEN_MONTHS_AGO, TWO_MONTHS_FROM_NOW),
         generateReinstatement(categoryCSiteIds[2], SEVEN_MONTHS_AGO, TWO_MONTHS_FROM_NOW),
@@ -577,7 +602,8 @@ describe('Generate Sample Inspections Job', () => {
         { ...generateReinstatement(categoryCSiteIds[12], SEVEN_MONTHS_AGO, ONE_MONTH_FROM_NOW), reinstatement_status_id: RefReinstatementStatus.interim }
       )
 
-      await insertReinspection(knex,
+      await insertReinspection(
+        knex,
         generateReinspection(categoryCWorkIds[1], CATEGORY_C_WRN_WITH_SCHEDULED_INSPECTION)
       )
     })
@@ -591,10 +617,11 @@ describe('Generate Sample Inspections Job', () => {
     })
 
     it('for works that do not already have a category C sample inspection', async () => {
-    await insertSampleInspection(knex,
-      generateSampleInspection(categoryCWorkIds[2] + 'SI-C', categoryCWorkIds[2], inactiveSampleInspectionTargetIds[0]),
-      { ...generateSampleInspection(categoryCWorkIds[3] + 'SI-C', categoryCWorkIds[3], inactiveSampleInspectionTargetIds[0]), inspection_category_id: RefInspectionCategory.c }
-    )
+      await insertSampleInspection(
+        knex,
+        generateSampleInspection(categoryCWorkIds[2] + 'SI-C', categoryCWorkIds[2], inactiveSampleInspectionTargetIds[0]),
+        { ...generateSampleInspection(categoryCWorkIds[3] + 'SI-C', categoryCWorkIds[3], inactiveSampleInspectionTargetIds[0]), inspection_category_id: RefInspectionCategory.c }
+      )
 
       const sampleInspections: Dictionary<SampleInspection> = await runJobAndGetGeneratedSampleInspections([CATEGORY_C_ID])
 
@@ -638,11 +665,13 @@ describe('Generate Sample Inspections Job', () => {
     })
 
     it('should generate the correct number of sample inspections for the target', async () => {
-      await insertSampleInspection(knex,
+      await insertSampleInspection(
+        knex,
         { ...generateSampleInspection(categoryCWorkIds[0] + '-SI-C'), work_id: categoryCWorkIds[0], sample_inspection_target_id: activeSampleInspectionTargetIds[0], inspection_category_id: RefInspectionCategory.c }
       )
 
-      const moreValidCategoryCWorkIds = await insertWork(knex, postgis,
+      const moreValidCategoryCWorkIds = await insertWork(
+        knex, postgis,
         generateIntegrationTestWork(CATEGORY_C_WRN + '1'),
         generateIntegrationTestWork(CATEGORY_C_WRN + '2'),
         generateIntegrationTestWork(CATEGORY_C_WRN + '3'),
@@ -651,7 +680,8 @@ describe('Generate Sample Inspections Job', () => {
       )
       categoryCWorkIds.push(...moreValidCategoryCWorkIds)
 
-      const moreSiteIds: number[] = await insertSite(knex,
+      const moreSiteIds: number[] = await insertSite(
+        knex,
         generateSite(moreValidCategoryCWorkIds[0]),
         generateSite(moreValidCategoryCWorkIds[1]),
         generateSite(moreValidCategoryCWorkIds[2]),
@@ -660,7 +690,8 @@ describe('Generate Sample Inspections Job', () => {
       )
       categoryCSiteIds.push(...moreSiteIds)
 
-      const moreReinstatementIds: number[] = await insertReinstatement(knex, postgis,
+      const moreReinstatementIds: number[] = await insertReinstatement(
+        knex, postgis,
         generateReinstatement(moreSiteIds[0], SEVEN_MONTHS_AGO, TWO_MONTHS_FROM_NOW),
         generateReinstatement(moreSiteIds[1], SEVEN_MONTHS_AGO, TWO_MONTHS_FROM_NOW),
         generateReinstatement(moreSiteIds[2], SEVEN_MONTHS_AGO, TWO_MONTHS_FROM_NOW),
