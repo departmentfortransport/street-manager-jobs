@@ -1,10 +1,10 @@
 import * as Knex from 'knex'
-import * as knexPostgis from 'knex-postgis'
+import { KnexPostgis } from 'knex-postgis'
 import { Work, RefWorkStatus } from 'street-manager-data'
 import { generateWork } from '../../fixtures/workFixtures'
 import { haOrganisationId, smokePlannerOrganisationId } from '../generate-sample-inspections/setup'
 
-export async function insertWork(knex: Knex, postgis: knexPostgis.KnexPostgis, ...works: Work[]): Promise<number[]> {
+export async function insertWork(knex: Knex, postgis: KnexPostgis, ...works: Work[]): Promise<number[]> {
   works.forEach(work => {
     const geomData = { works_coordinates: postgis.geomFromGeoJSON(work.works_coordinates) }
     Object.assign(work, geomData)

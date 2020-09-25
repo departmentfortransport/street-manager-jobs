@@ -1,8 +1,8 @@
 import * as Knex from 'knex'
-import * as knexPostgis from 'knex-postgis'
+import { KnexPostgis } from 'knex-postgis'
 import { Reinstatement } from 'street-manager-data'
 
-export async function insertReinstatement(knex: Knex, postgis: knexPostgis.KnexPostgis, ...reinstatements: Reinstatement[]): Promise<number[]> {
+export async function insertReinstatement(knex: Knex, postgis: KnexPostgis, ...reinstatements: Reinstatement[]): Promise<number[]> {
   reinstatements.forEach(reinstatement => {
     const geomData = { reinstatement_coordinates: postgis.geomFromGeoJSON(reinstatement.reinstatement_coordinates)}
     Object.assign(reinstatement, geomData)
