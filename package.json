@@ -23,7 +23,7 @@
     "moment-timezone": "^0.5.28",
     "pg": "^8.0.3",
     "reflect-metadata": "^0.1.13",
-    "street-manager-data": "git+ssh://git@github.com:departmentfortransport/street-manager-data#1fef17fea08741fea9ba07749ebbb8a3a0973731"
+    "street-manager-data": "git+ssh://git@github.com:departmentfortransport/street-manager-data#961a6983d0618e4181ad65e2a0ad05f2154be208"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",

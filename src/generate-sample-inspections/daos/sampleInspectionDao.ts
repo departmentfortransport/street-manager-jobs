@@ -1,6 +1,6 @@
 import * as Knex from 'knex'
 import { inject, injectable } from 'inversify'
-import { SampleInspection } from 'street-manager-data'
+import { RefInspectionCategory, RefSampleInspectionStatus, SampleInspection } from 'street-manager-data'
 import TYPES from '../types'
 
 @injectable()
@@ -67,7 +67,8 @@ export default class SampleInspectionDao {
           'eligible_works.work_id',
           'eligible_works.promoter_organisation_id',
           'eligible_works.work_end_date AS expiry_date',
-          this.knex.raw('1 AS inspection_category_id')
+          this.knex.raw(`${RefInspectionCategory.a} AS inspection_category_id`),
+          this.knex.raw(`${RefSampleInspectionStatus.issued} AS sample_inspection_status_id`)
       )
       .from(this.getCategoryAEligibleWorks(organisationId))
       .whereRaw(`eligible_works.row_num <= eligible_works.category_a_to_generate`)
@@ -80,8 +81,9 @@ export default class SampleInspectionDao {
         'eligible_works.sample_inspection_target_id',
         'eligible_works.work_id',
         'eligible_works.promoter_organisation_id',
-        this.knex.raw('MAX(eligible_works.reinstatement_date) AS expiry_date'),
-        this.knex.raw('2 AS inspection_category_id')
+        this.knex.raw(`MAX(eligible_works.reinstatement_date) + interval '6 months' AS expiry_date`),
+        this.knex.raw(`${RefInspectionCategory.b} AS inspection_category_id`),
+        this.knex.raw(`${RefSampleInspectionStatus.issued} AS sample_inspection_status_id`)
       )
       .from(this.getCategoryBEligibleWorks(organisationId))
       .whereRaw(`eligible_works.row_num <= eligible_works.category_b_to_generate`)
@@ -96,7 +98,8 @@ export default class SampleInspectionDao {
         'eligible_works.work_id',
         'eligible_works.promoter_organisation_id',
         this.knex.raw('MAX(eligible_works.end_date) AS expiry_date'),
-        this.knex.raw('3 AS inspection_category_id')
+        this.knex.raw(`${RefInspectionCategory.c} AS inspection_category_id`),
+        this.knex.raw(`${RefSampleInspectionStatus.issued} AS sample_inspection_status_id`)
       )
       .from(this.getCategoryCEligibleWorks(organisationId))
       .whereRaw(`eligible_works.row_num <= eligible_works.category_c_to_generate`)

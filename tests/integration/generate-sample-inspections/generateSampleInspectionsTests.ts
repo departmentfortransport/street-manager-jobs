@@ -214,7 +214,7 @@ describe('Generate Sample Inspections Job', () => {
       const sampleInspections: Dictionary<SampleInspection> = await runJobAndGetGeneratedSampleInspections([CATEGORY_A_ID, CATEGORY_B_ID, CATEGORY_C_ID])
 
       assertSampleInspection(sampleInspections[workIds[0]], WORK_1_WRN + '-SI-A', activeSampleInspectionTargetIds[0], RefInspectionCategory.a, workIds[0], work1.promoter_organisation_id, work1.work_end_date)
-      assertSampleInspection(sampleInspections[workIds[1]], WORK_2_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, workIds[1], work2.promoter_organisation_id, TWO_MONTHS_AGO)
+      assertSampleInspection(sampleInspections[workIds[1]], WORK_2_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, workIds[1], work2.promoter_organisation_id, addSixMonthsToDate(TWO_MONTHS_AGO))
       assertSampleInspection(sampleInspections[workIds[2]], WORK_3_WRN + '-SI-C', activeSampleInspectionTargetIds[0], RefInspectionCategory.c, workIds[2], work3.promoter_organisation_id, TWO_MONTHS_FROM_NOW)
     })
 
@@ -225,7 +225,7 @@ describe('Generate Sample Inspections Job', () => {
       const sampleInspections: Dictionary<SampleInspection[]> = groupBy(generatedSampleInspections, 'work_id')
 
       assertSampleInspection(sampleInspections[workIds[3]][0], WORK_4_WRN + '-SI-A', activeSampleInspectionTargetIds[0], RefInspectionCategory.a, workIds[3], work4.promoter_organisation_id, work4.work_end_date)
-      assertSampleInspection(sampleInspections[workIds[3]][1], WORK_4_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, workIds[3], work4.promoter_organisation_id, TWO_MONTHS_AGO)
+      assertSampleInspection(sampleInspections[workIds[3]][1], WORK_4_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, workIds[3], work4.promoter_organisation_id, addSixMonthsToDate(TWO_MONTHS_AGO))
       assertSampleInspection(sampleInspections[workIds[3]][2], WORK_4_WRN + '-SI-C', activeSampleInspectionTargetIds[0], RefInspectionCategory.c, workIds[3], work4.promoter_organisation_id, TWO_MONTHS_FROM_NOW)
     })
 
@@ -421,7 +421,7 @@ describe('Generate Sample Inspections Job', () => {
     it('for works that do not have scheduled inspections', async () => {
       const sampleInspections: Dictionary<SampleInspection> = await runJobAndGetGeneratedSampleInspections([CATEGORY_B_ID])
 
-      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, reinstatementCategoryB.reinstatement_date)
+      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, addSixMonthsToDate(reinstatementCategoryB.reinstatement_date))
 
       assert.isUndefined(sampleInspections[categoryBWorkIds[1]])
     })
@@ -435,8 +435,8 @@ describe('Generate Sample Inspections Job', () => {
 
       const sampleInspections: Dictionary<SampleInspection> = await runJobAndGetGeneratedSampleInspections([CATEGORY_B_ID])
 
-      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, reinstatementCategoryB.reinstatement_date)
-      assertSampleInspection(sampleInspections[categoryBWorkIds[2]], CATEGORY_B_WRN_WITH_CATEGORY_A_SAMPLE_INSPECTION + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[2], workBWithCategoryASampleInspection.promoter_organisation_id, reinstatementCategoryBWithCategoryASampleInspection.reinstatement_date)
+      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, addSixMonthsToDate(reinstatementCategoryB.reinstatement_date))
+      assertSampleInspection(sampleInspections[categoryBWorkIds[2]], CATEGORY_B_WRN_WITH_CATEGORY_A_SAMPLE_INSPECTION + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[2], workBWithCategoryASampleInspection.promoter_organisation_id, addSixMonthsToDate(reinstatementCategoryBWithCategoryASampleInspection.reinstatement_date))
 
       assert.isUndefined(sampleInspections[categoryBWorkIds[3]])
     })
@@ -444,7 +444,7 @@ describe('Generate Sample Inspections Job', () => {
     it('for works that have reinstatements carried out less than 6 months ago (one per work)', async () => {
       const sampleInspections: Dictionary<SampleInspection> = await runJobAndGetGeneratedSampleInspections([CATEGORY_B_ID])
 
-      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, reinstatementCategoryB.reinstatement_date)
+      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, addSixMonthsToDate(reinstatementCategoryB.reinstatement_date))
 
       assert.isUndefined(sampleInspections[categoryBWorkIds[4]])
       assert.isUndefined(sampleInspections[categoryBWorkIds[5]])
@@ -453,7 +453,7 @@ describe('Generate Sample Inspections Job', () => {
     it('for works that have excavation reinstatements', async () => {
       const sampleInspections: Dictionary<SampleInspection> = await runJobAndGetGeneratedSampleInspections([CATEGORY_B_ID])
 
-      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, reinstatementCategoryB.reinstatement_date)
+      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, addSixMonthsToDate(reinstatementCategoryB.reinstatement_date))
 
       assert.isUndefined(sampleInspections[categoryBWorkIds[6]])
     })
@@ -461,7 +461,7 @@ describe('Generate Sample Inspections Job', () => {
     it('for the HA org in the job details only', async () => {
       const sampleInspections: Dictionary<SampleInspection> = await runJobAndGetGeneratedSampleInspections([CATEGORY_B_ID])
 
-      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, reinstatementCategoryB.reinstatement_date)
+      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, addSixMonthsToDate(reinstatementCategoryB.reinstatement_date))
 
       assert.isUndefined(sampleInspections[categoryBWorkIds[7]])
     })
@@ -469,8 +469,8 @@ describe('Generate Sample Inspections Job', () => {
     it('for each promoter target for the HA', async () => {
       const sampleInspections: Dictionary<SampleInspection> = await runJobAndGetGeneratedSampleInspections([CATEGORY_B_ID])
 
-      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, reinstatementCategoryB.reinstatement_date)
-      assertSampleInspection(sampleInspections[categoryBWorkIds[8]], CATEGORY_B_WRN_OTHER_PROMOTER + '-SI-B', activeSampleInspectionTargetIds[1], RefInspectionCategory.b, categoryBWorkIds[8], workBOtherPromoter.promoter_organisation_id, reinstatementCategoryBOtherPromoter.reinstatement_date)
+      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, addSixMonthsToDate(reinstatementCategoryB.reinstatement_date))
+      assertSampleInspection(sampleInspections[categoryBWorkIds[8]], CATEGORY_B_WRN_OTHER_PROMOTER + '-SI-B', activeSampleInspectionTargetIds[1], RefInspectionCategory.b, categoryBWorkIds[8], workBOtherPromoter.promoter_organisation_id, addSixMonthsToDate(reinstatementCategoryBOtherPromoter.reinstatement_date))
     })
 
     it('for the cap amount defined in the target', async () => {
@@ -514,8 +514,8 @@ describe('Generate Sample Inspections Job', () => {
     it('with expiry date as the most recent active reinstatement_date for eligible works', async () => {
       const sampleInspections: Dictionary<SampleInspection> = await runJobAndGetGeneratedSampleInspections([CATEGORY_B_ID])
 
-      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, reinstatementCategoryB.reinstatement_date)
-      assertSampleInspection(sampleInspections[categoryBWorkIds[9]], CATEGORY_B_WRN_MULTIPLE_SITES + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[9], workBWithMultipleSites.promoter_organisation_id, ONE_WEEK_AGO)
+      assertSampleInspection(sampleInspections[categoryBWorkIds[0]], CATEGORY_B_WRN + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[0], workCategoryB.promoter_organisation_id, addSixMonthsToDate(reinstatementCategoryB.reinstatement_date))
+      assertSampleInspection(sampleInspections[categoryBWorkIds[9]], CATEGORY_B_WRN_MULTIPLE_SITES + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[9], workBWithMultipleSites.promoter_organisation_id, addSixMonthsToDate(ONE_WEEK_AGO))
     })
 
     after(async () => {
@@ -737,12 +737,16 @@ describe('Generate Sample Inspections Job', () => {
     await deleteJobs(knex, JOB_ID)
   })
 
+  function addSixMonthsToDate(date: Date): Date {
+    return moment(date).add(6, 'months').toDate()
+  }
+
   function assertSampleInspection(sampleInspection: SampleInspection, refNumber: string, targetId: number, inspectionCategory: number, workId: number, promoterOrgId: number, expiryDate: Date) {
     assert.equal(sampleInspection.sample_inspection_reference_number, refNumber)
     assert.equal(sampleInspection.sample_inspection_target_id, targetId)
     assert.equal(sampleInspection.inspection_category_id, inspectionCategory)
     assert.equal(sampleInspection.work_id, workId)
     assert.equal(sampleInspection.promoter_organisation_id, promoterOrgId)
-    assert.deepEqual(sampleInspection.expiry_date, expiryDate)
+    assert.deepEqual(moment(sampleInspection.expiry_date).startOf('day').toDate(), moment(expiryDate).startOf('day').toDate())
   }
 })
