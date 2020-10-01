@@ -1,4 +1,4 @@
-import { SampleInspection, RefInspectionCategory } from 'street-manager-data'
+import { SampleInspection, RefInspectionCategory, RefSampleInspectionStatus } from 'street-manager-data'
 
 export function generateSampleInspection(sampleInspectionReferenceNumber = 'SMPL-01', workId = 123, sampleInspectionTargetId = 1): SampleInspection {
   return {
@@ -7,6 +7,7 @@ export function generateSampleInspection(sampleInspectionReferenceNumber = 'SMPL
     inspection_category_id: RefInspectionCategory.a,
     work_id: workId,
     promoter_organisation_id: 11,
-    expiry_date: new Date()
+    expiry_date: new Date(),
+    sample_inspection_status_id: RefSampleInspectionStatus.issued
   }
 }
