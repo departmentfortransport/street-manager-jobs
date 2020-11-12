@@ -9,8 +9,8 @@ const jobId: number = Number(GENERATE_SAMPLE_INSPECTIONS_JOB_ID)
 
 process.on('SIGTERM', async () => await destroyKnex())
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled rejection at: ', promise, `\nReason: ${reason}`)
+process.on('unhandledRejection', (reason: Error) => {
+  console.error(`Unhandled rejection at: ${reason.stack}`)
 })
 
 run()
