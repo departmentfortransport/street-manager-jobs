@@ -49,9 +49,9 @@ export default class SampleInspectionDao {
       SELECT
         sample_inspection_target.sample_inspection_target_id,
         sample_inspection_target.promoter_organisation_id,
-        cap_category_a - (COUNT(sample_inspection.sample_inspection_id) FILTER (WHERE inspection_category_id=1)) AS category_a_to_generate,
-        cap_category_b - (COUNT(sample_inspection.sample_inspection_id) FILTER (WHERE inspection_category_id=2)) AS category_b_to_generate,
-        cap_category_c - (COUNT(sample_inspection.sample_inspection_id) FILTER (WHERE inspection_category_id=3)) AS category_c_to_generate
+        cap_category_a - (COUNT(sample_inspection.sample_inspection_id) FILTER (WHERE inspection_category_id=${RefInspectionCategory.a} AND sample_inspection_status_id=${RefSampleInspectionStatus.issued})) AS category_a_to_generate,
+        cap_category_b - (COUNT(sample_inspection.sample_inspection_id) FILTER (WHERE inspection_category_id=${RefInspectionCategory.b} AND sample_inspection_status_id=${RefSampleInspectionStatus.issued})) AS category_b_to_generate,
+        cap_category_c - (COUNT(sample_inspection.sample_inspection_id) FILTER (WHERE inspection_category_id=${RefInspectionCategory.c} AND sample_inspection_status_id=${RefSampleInspectionStatus.issued})) AS category_c_to_generate
       FROM sample_inspection
       RIGHT JOIN sample_inspection_target ON sample_inspection_target.sample_inspection_target_id = sample_inspection.sample_inspection_target_id
       WHERE sample_inspection_target.ha_organisation_id = ${organisationId}
