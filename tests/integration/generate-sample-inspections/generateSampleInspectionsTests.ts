@@ -2,14 +2,14 @@ import 'mocha'
 import { assert } from 'chai'
 import * as moment from 'moment'
 import { Dictionary, groupBy, indexBy } from 'underscore'
-import { AsyncJob, AsyncJobTypeEnum, RefAsyncJobStatus, Work, SampleInspection, RefInspectionCategory, RefWorkStatus, RefReinstatementType, SampleInspectionTarget, Reinstatement, RefReinstatementStatus } from 'street-manager-data'
+import { AsyncJob, AsyncJobTypeEnum, RefAsyncJobStatus, Work, SampleInspection, RefInspectionCategory, RefWorkStatus, RefReinstatementType, SampleInspectionTarget, Reinstatement, RefReinstatementStatus, RefSampleInspectionStatus } from 'street-manager-data'
 import { job, knex, postgis, smokePlannerOrganisationId, haOrganisationId, c2cPlannerOrganisationId, dorsetHAOrganisationId } from './setup'
 import { generateAsyncJob } from '../../fixtures/asyncJobFixtures'
 import { insertJobs, getJob, deleteJobs } from '../helpers/asyncJobHelper'
 import { insertSampleInspectionTarget, deleteSampleInspectionTarget } from '../helpers/sampleInspectionTargetHelper'
 import { generateSampleInspectionTarget } from '../../fixtures/sampleInspectionTargetFixtures'
 import { insertWork, generateIntegrationTestWork, deleteWork } from '../helpers/workHelper'
-import { getSampleInspections, insertSampleInspection, deleteSampleInspectionByTarget } from '../helpers/sampleInspectionHelper'
+import { getSampleInspections, insertSampleInspection, deleteSampleInspectionByTarget, getSampleInspectionsByStatus } from '../helpers/sampleInspectionHelper'
 import { generateSampleInspection } from '../../fixtures/sampleInspectionFixtures'
 import { generateReinspection } from '../../fixtures/reinspectionFixtures'
 import { insertReinspection, deleteReinspection } from '../helpers/reinspectionHelper'
@@ -338,6 +338,29 @@ describe('Generate Sample Inspections Job', () => {
       assert.equal(Object.keys(sampleInspections).length, activeSampleInspectionTarget.cap_category_a)
     })
 
+    it('should only subtract issued sample inspections from the number to generate', async () => {
+      const additionalCategoryAWorkIds: number[] = await insertWork(
+        knex, postgis,
+        generateIntegrationTestWork(CATEGORY_A_WRN + '6', RefWorkStatus.in_progress),
+        generateIntegrationTestWork(CATEGORY_A_WRN + '7', RefWorkStatus.in_progress),
+        generateIntegrationTestWork(CATEGORY_A_WRN + '8', RefWorkStatus.in_progress)
+      )
+
+      categoryAWorkIds.push(...additionalCategoryAWorkIds)
+
+      await insertSampleInspection(
+        knex,
+        { ...generateSampleInspection(additionalCategoryAWorkIds[0] + 'SI-A', additionalCategoryAWorkIds[0], activeSampleInspectionTargetIds[0]), sample_inspection_status_id: RefSampleInspectionStatus.issued },
+        { ...generateSampleInspection(additionalCategoryAWorkIds[1] + 'SI-A-2', additionalCategoryAWorkIds[1], activeSampleInspectionTargetIds[0]), sample_inspection_status_id: RefSampleInspectionStatus.completed },
+        { ...generateSampleInspection(additionalCategoryAWorkIds[2] + 'SI-A-3', additionalCategoryAWorkIds[2], activeSampleInspectionTargetIds[0]), sample_inspection_status_id: RefSampleInspectionStatus.expired }
+      )
+
+      await job.run(JOB_ID)
+
+      const issuedSampleInspections: SampleInspection[] = await getSampleInspectionsByStatus(knex, [activeSampleInspectionTargetIds[0]], [CATEGORY_A_ID], [RefSampleInspectionStatus.issued])
+      assert.equal(issuedSampleInspections.length, activeSampleInspectionTarget.cap_category_a)
+    })
+
     after(async () => {
       await deleteReinspection(knex, CATEGORY_A_WRN_WITH_SCHEDULED_INSPECTION)
       await deleteWork(knex, ...categoryAWorkIds)
@@ -518,6 +541,44 @@ describe('Generate Sample Inspections Job', () => {
       assertSampleInspection(sampleInspections[categoryBWorkIds[9]], CATEGORY_B_WRN_MULTIPLE_SITES + '-SI-B', activeSampleInspectionTargetIds[0], RefInspectionCategory.b, categoryBWorkIds[9], workBWithMultipleSites.promoter_organisation_id, addSixMonthsToDate(ONE_WEEK_AGO))
     })
 
+    it('should only subtract issued sample inspections from the number to generate', async () => {
+      const additionalCategoryBWorkIds = await insertWork(
+        knex, postgis,
+        generateIntegrationTestWork(CATEGORY_B_WRN + '5', RefWorkStatus.planned),
+        generateIntegrationTestWork(CATEGORY_B_WRN + '6', RefWorkStatus.planned),
+        generateIntegrationTestWork(CATEGORY_B_WRN + '7', RefWorkStatus.planned)
+      )
+      categoryBWorkIds.push(...additionalCategoryBWorkIds)
+
+      const additionalSiteIds: number[] = await insertSite(
+        knex,
+        generateSite(additionalCategoryBWorkIds[0]),
+        generateSite(additionalCategoryBWorkIds[1]),
+        generateSite(additionalCategoryBWorkIds[2])
+      )
+      categoryBSiteIds.push(...additionalSiteIds)
+
+      const additionalReinstatementIds: number[] = await insertReinstatement(
+        knex, postgis,
+        generateReinstatement(additionalSiteIds[0], TWO_MONTHS_AGO),
+        generateReinstatement(additionalSiteIds[1], TWO_MONTHS_AGO),
+        generateReinstatement(additionalSiteIds[2], TWO_MONTHS_AGO)
+      )
+      categoryBReinstatementIds.push(...additionalReinstatementIds)
+
+      await insertSampleInspection(
+        knex,
+        { ...generateSampleInspection(additionalCategoryBWorkIds[0] + '-SI-B', additionalCategoryBWorkIds[0], activeSampleInspectionTargetIds[0]), inspection_category_id: RefInspectionCategory.b, sample_inspection_status_id: RefSampleInspectionStatus.issued },
+        { ...generateSampleInspection(additionalCategoryBWorkIds[1] + '-SI-B-2', additionalCategoryBWorkIds[1], activeSampleInspectionTargetIds[0]), inspection_category_id: RefInspectionCategory.b, sample_inspection_status_id: RefSampleInspectionStatus.completed },
+        { ...generateSampleInspection(additionalCategoryBWorkIds[2] + '-SI-B-3', additionalCategoryBWorkIds[2], activeSampleInspectionTargetIds[0]), inspection_category_id: RefInspectionCategory.b, sample_inspection_status_id: RefSampleInspectionStatus.expired }
+      )
+
+      await job.run(JOB_ID)
+
+      const issuedSampleInspections: SampleInspection[] = await getSampleInspectionsByStatus(knex, [activeSampleInspectionTargetIds[0]], [CATEGORY_B_ID], [RefSampleInspectionStatus.issued])
+      assert.equal(issuedSampleInspections.length, activeSampleInspectionTarget.cap_category_b)
+    })
+
     after(async () => {
       await deleteReinspection(knex, CATEGORY_B_WRN_WITH_SCHEDULED_INSPECTION)
       await deleteReinstatement(knex, ...categoryBReinstatementIds)
@@ -664,7 +725,7 @@ describe('Generate Sample Inspections Job', () => {
       assertSampleInspection(sampleInspections[categoryCWorkIds[9]], CATEGORY_C_WRN_OTHER_PROMOTER + '-SI-C', activeSampleInspectionTargetIds[1], RefInspectionCategory.c, categoryCWorkIds[9], workCOtherPromoter.promoter_organisation_id, reinstatementCategoryCOtherPromoter.end_date)
     })
 
-    it('should generate the correct number of sample inspections for the target', async () => {
+    it('should generate no more than the capped number of sample inspections for the target', async () => {
       await insertSampleInspection(
         knex,
         { ...generateSampleInspection(categoryCWorkIds[0] + '-SI-C'), work_id: categoryCWorkIds[0], sample_inspection_target_id: activeSampleInspectionTargetIds[0], inspection_category_id: RefInspectionCategory.c }
@@ -718,6 +779,44 @@ describe('Generate Sample Inspections Job', () => {
       assertSampleInspection(sampleInspections[categoryCWorkIds[0]], CATEGORY_C_WRN + '-SI-C', activeSampleInspectionTargetIds[0], RefInspectionCategory.c, categoryCWorkIds[0], workCategoryC.promoter_organisation_id, reinstatementCategoryC.end_date)
 
       assert.isUndefined(sampleInspections[categoryCWorkIds[11]])
+    })
+
+    it('should only subtract issued sample inspections from the number to generate', async () => {
+      const additionalCategoryCWorkIds = await insertWork(
+        knex, postgis,
+        generateIntegrationTestWork(CATEGORY_C_WRN + '6'),
+        generateIntegrationTestWork(CATEGORY_C_WRN + '7'),
+        generateIntegrationTestWork(CATEGORY_C_WRN + '8')
+      )
+      categoryCWorkIds.push(...additionalCategoryCWorkIds)
+
+      const additionalSiteIds: number[] = await insertSite(
+        knex,
+        generateSite(additionalCategoryCWorkIds[0]),
+        generateSite(additionalCategoryCWorkIds[1]),
+        generateSite(additionalCategoryCWorkIds[2])
+      )
+      categoryCSiteIds.push(...additionalSiteIds)
+
+      const additionalReinstatementIds: number[] = await insertReinstatement(
+        knex, postgis,
+        generateReinstatement(additionalSiteIds[0], SEVEN_MONTHS_AGO, TWO_MONTHS_FROM_NOW),
+        generateReinstatement(additionalSiteIds[1], SEVEN_MONTHS_AGO, TWO_MONTHS_FROM_NOW),
+        generateReinstatement(additionalSiteIds[2], SEVEN_MONTHS_AGO, TWO_MONTHS_FROM_NOW)
+      )
+      categoryCReinstatementIds.push(...additionalReinstatementIds)
+
+      await insertSampleInspection(
+        knex,
+        { ...generateSampleInspection(additionalCategoryCWorkIds[0] + '-SI-C'), work_id: additionalCategoryCWorkIds[0], sample_inspection_target_id: activeSampleInspectionTargetIds[0], inspection_category_id: RefInspectionCategory.c, sample_inspection_status_id: RefSampleInspectionStatus.issued },
+        { ...generateSampleInspection(additionalCategoryCWorkIds[1] + '-SI-C-2'), work_id: additionalCategoryCWorkIds[1], sample_inspection_target_id: activeSampleInspectionTargetIds[0], inspection_category_id: RefInspectionCategory.c, sample_inspection_status_id: RefSampleInspectionStatus.completed },
+        { ...generateSampleInspection(additionalCategoryCWorkIds[2] + '-SI-C-3'), work_id: additionalCategoryCWorkIds[2], sample_inspection_target_id: activeSampleInspectionTargetIds[0], inspection_category_id: RefInspectionCategory.c, sample_inspection_status_id: RefSampleInspectionStatus.expired }
+      )
+
+      await job.run(JOB_ID)
+
+      const issuedSampleInspections: SampleInspection[] = await getSampleInspectionsByStatus(knex, [activeSampleInspectionTargetIds[0]], [CATEGORY_C_ID], [RefSampleInspectionStatus.issued])
+      assert.equal(issuedSampleInspections.length, activeSampleInspectionTarget.cap_category_c)
     })
 
     after(async () => {
