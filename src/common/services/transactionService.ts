@@ -7,7 +7,11 @@ export abstract class TransactionService {
   protected constructor(private knex: Knex) {}
 
   protected startTransaction(): Promise<Knex.Transaction> {
-    return new Promise<Knex.Transaction>(resolve => this.knex.transaction((trx: Knex.Transaction) => resolve(trx)))
+    return new Promise<Knex.Transaction>(
+      (resolve, reject) =>
+        this.knex.transaction((trx: Knex.Transaction) => resolve(trx))
+          .catch(err => reject(err))
+    )
   }
 
   protected async finishTransaction(trx: Knex.Transaction): Promise<void> {
