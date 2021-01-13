@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   postgres:
-    image: ${ECR_URL}/postgres:postgres-10.11-r7
+    image: ${ECR_URL}/postgres:postgres-10.13-r1
     ports:
       - "5432:5432"
   jobs:
