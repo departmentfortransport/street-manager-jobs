@@ -3,8 +3,8 @@ aliases:
     name: Assume Admin role on dev account
     command: |
       unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-      export AWS_ACCESS_KEY_ID="${AWS_MASTER_ACCOUNT_ACCESS_KEY_ID}"
-      export AWS_SECRET_ACCESS_KEY="${AWS_MASTER_ACCOUNT_SECRET_ACCESS_KEY}"
+      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_CI_USER_DEV_ACC}"
+      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_CI_USER_DEV_ACC}"
       TOKEN=$(aws sts assume-role \
         --role-arn arn:aws:iam::454455319752:role/Dev-Admin \
         --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
@@ -16,10 +16,10 @@ aliases:
     name: Assume ECR role on Dev account
     command: |
       unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_DEV_ECR}"
-      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_DEV_ECR}"
+      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_ECR_CI_USER_DEV_ACC}"
+      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_ECR_CI_USER_DEV_ACC}"
       TOKEN=$(aws sts assume-role \
-        --role-arn arn:aws:iam::${AWS_ACCOUNT_DEV}:role/${AWS_ROLE_DEV_ECR} \
+        --role-arn arn:aws:iam::${AWS_ACC_ID_DEV}:role/${AWS_ROLE_CI_ECR_DEV_ACC} \
         --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
         )
       echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
@@ -30,10 +30,10 @@ aliases:
     name: Assume ECR role on Preview account
     command: |
       unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_PREVIEW_ECR}"
-      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_PREVIEW_ECR}"
+      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_ECR_CI_USER_PREVIEW_ACC}"
+      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_ECR_CI_USER_PREVIEW_ACC}"
       TOKEN=$(aws sts assume-role \
-        --role-arn arn:aws:iam::${AWS_ACCOUNT_PREVIEW}:role/${AWS_ROLE_PREVIEW_ECR} \
+        --role-arn arn:aws:iam::${AWS_ACC_ID_PREVIEW}:role/${AWS_ROLE_CI_ECR_PREVIEW_ACC} \
         --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
         )
       echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
@@ -44,10 +44,10 @@ aliases:
     name: Assume ECR role on PreProd account
     command: |
       unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_PREPROD_ECR}"
-      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_PREPROD_ECR}"
+      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_ECR_CI_USER_PREPROD_ACC}"
+      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_ECR_CI_USER_PREPROD_ACC}"
       TOKEN=$(aws sts assume-role \
-        --role-arn arn:aws:iam::${AWS_ACCOUNT_PREPROD}:role/${AWS_ROLE_PREPROD_ECR} \
+        --role-arn arn:aws:iam::${AWS_ACC_ID_PREPROD}:role/${AWS_ROLE_CI_ECR_PREPROD_ACC} \
         --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
         )
       echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
@@ -58,10 +58,10 @@ aliases:
     name: Assume ECR role on Production account
     command: |
       unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_PROD_ECR}"
-      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_PROD_ECR}"
+      export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_ECR_CI_USER_PROD_ACC}"
+      export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_ECR_CI_USER_PROD_ACC}"
       TOKEN=$(aws sts assume-role \
-        --role-arn arn:aws:iam::${AWS_ACCOUNT_PROD}:role/${AWS_ROLE_PROD_ECR} \
+        --role-arn arn:aws:iam::${AWS_ACC_ID_PROD}:role/${AWS_ROLE_CI_ECR_PROD_ACC} \
         --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
         )
       echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
@@ -70,25 +70,25 @@ aliases:
       echo "export AWS_MFA_EXPIRY=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["Expiration"]' 2> /dev/null)" >> $BASH_ENV
   - &build_container
     name: Build Container
-    command: docker build -t ${AWS_ACCOUNT_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} --build-arg JOBS_IMAGE=${JOBS_IMAGE} .
+    command: docker build -t ${AWS_ACC_ID_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} --build-arg JOBS_IMAGE=${JOBS_IMAGE} .
   - &push_dev_ecr
     name: Push to dev ECR
-    command: docker push ${AWS_ACCOUNT_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+    command: docker push ${AWS_ACC_ID_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
   - &push_preview_ecr
     name: Push to preview ECR
     command: |
-      docker tag ${AWS_ACCOUNT_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACCOUNT_PREVIEW}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
-      docker push ${AWS_ACCOUNT_PREVIEW}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker tag ${AWS_ACC_ID_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACC_ID_PREVIEW}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker push ${AWS_ACC_ID_PREVIEW}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
   - &push_preprod_ecr
     name: Push to preprod ECR
     command: |
-      docker tag ${AWS_ACCOUNT_PREVIEW}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACCOUNT_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
-      docker push ${AWS_ACCOUNT_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker tag ${AWS_ACC_ID_PREVIEW}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACC_ID_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker push ${AWS_ACC_ID_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
   - &push_prod_ecr
     name: Push to prod ECR
     command: |
-      docker tag ${AWS_ACCOUNT_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACCOUNT_PROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
-      docker push ${AWS_ACCOUNT_PROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker tag ${AWS_ACC_ID_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACC_ID_PROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker push ${AWS_ACC_ID_PROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
   - &assume_jobs-integration-test_role_dev_account
     name: Assume jobs-integration-test role on dev account
     command: |
