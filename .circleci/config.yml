@@ -70,25 +70,25 @@ aliases:
       echo "export AWS_MFA_EXPIRY=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["Expiration"]' 2> /dev/null)" >> $BASH_ENV
   - &build_container
     name: Build Container
-    command: docker build -t ${AWS_ACC_ID_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} --build-arg JOBS_IMAGE=${JOBS_IMAGE} .
+    command: docker build -t ${AWS_ACC_ID_DEV}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} --build-arg JOBS_IMAGE=${JOBS_IMAGE} .
   - &push_dev_ecr
     name: Push to dev ECR
-    command: docker push ${AWS_ACC_ID_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+    command: docker push ${AWS_ACC_ID_DEV}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
   - &push_preview_ecr
     name: Push to preview ECR
     command: |
-      docker tag ${AWS_ACC_ID_DEV}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACC_ID_PREVIEW}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
-      docker push ${AWS_ACC_ID_PREVIEW}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker tag ${AWS_ACC_ID_DEV}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACC_ID_PREVIEW}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker push ${AWS_ACC_ID_PREVIEW}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
   - &push_preprod_ecr
     name: Push to preprod ECR
     command: |
-      docker tag ${AWS_ACC_ID_PREVIEW}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACC_ID_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
-      docker push ${AWS_ACC_ID_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker tag ${AWS_ACC_ID_PREVIEW}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACC_ID_PREPROD}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker push ${AWS_ACC_ID_PREPROD}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
   - &push_prod_ecr
     name: Push to prod ECR
     command: |
-      docker tag ${AWS_ACC_ID_PREPROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACC_ID_PROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
-      docker push ${AWS_ACC_ID_PROD}.dkr.ecr.${AWS_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker tag ${AWS_ACC_ID_PREPROD}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACC_ID_PROD}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
+      docker push ${AWS_ACC_ID_PROD}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
   - &assume_jobs-integration-test_role_dev_account
     name: Assume jobs-integration-test role on dev account
     command: |
