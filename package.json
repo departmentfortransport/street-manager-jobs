@@ -31,7 +31,7 @@
     "@types/moment-timezone": "^0.5.12",
     "@types/node": "^10.12.12",
     "@types/sinon": "^5.0.7",
-    "chai": "^4.2.0",
+    "chai": "^4.3.4",
     "mocha": "^5.2.0",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
