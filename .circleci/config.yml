@@ -146,9 +146,23 @@ aliases:
     command: |
       pip install awscli --upgrade --user
       docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} --build-arg JOBS_IMAGE=${JOBS_IMAGE} . --target dependencies --no-cache --pull
-  - &ecr_login
-    name: ECR login
-    command: $(aws ecr get-login --no-include-email --region eu-west-2)
+
+  - &ecr_login_dev
+    name: ECR login Dev
+    command: aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${AWS_ACC_ID_DEV}.dkr.ecr.eu-west-2.amazonaws.com
+
+  - &ecr_login_preview
+    name: ECR login Preview
+    command: aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${AWS_ACC_ID_PREVIEW}.dkr.ecr.eu-west-2.amazonaws.com
+
+  - &ecr_login_preprod
+    name: ECR login Preprod
+    command: aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${AWS_ACC_ID_PREPROD}.dkr.ecr.eu-west-2.amazonaws.com
+
+  - &ecr_login_prod
+    name: ECR login Production
+    command: aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${AWS_ACC_ID_PROD}.dkr.ecr.eu-west-2.amazonaws.com
+
   - &prepare_ssh_key
     name: Prepare SSH key
     command: |
@@ -170,11 +184,11 @@ version: 2.1
 jobs:
   build:
     machine:
-      image: circleci/classic:edge
+      image: ubuntu-2004:202101-01
     steps:
       - checkout
       - run: *assume_dev_ecr_role
-      - run: *ecr_login
+      - run: *ecr_login_dev
       - run: *prepare_ssh_key
       - run: *test
       - run: *assume_dev_admin_role
@@ -185,22 +199,23 @@ jobs:
       - run: *build_and_release
       - run: *cleanup
   tagged_build_and_release:
-    machine: true
+    machine:
+      image: ubuntu-2004:202101-01
     steps:
       - checkout
       - run: *prepare_ssh_key
       - run: *assume_dev_ecr_role
-      - run: *ecr_login
+      - run: *ecr_login_dev
       - run: *build_container
       - run: *push_dev_ecr
       - run: *assume_preview_ecr_role
-      - run: *ecr_login
+      - run: *ecr_login_preview
       - run: *push_preview_ecr
       - run: *assume_preprod_ecr_role
-      - run: *ecr_login
+      - run: *ecr_login_preprod
       - run: *push_preprod_ecr
       - run: *assume_prod_ecr_role
-      - run: *ecr_login
+      - run: *ecr_login_prod
       - run: *push_prod_ecr
 
 workflows:
