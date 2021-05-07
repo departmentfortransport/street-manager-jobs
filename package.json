@@ -40,6 +40,6 @@
     "ts-node": "^7.0.1",
     "tslint": "^6.1.2",
     "typescript": "^3.8.3",
-    "underscore": "^1.10.2"
+    "underscore": "^1.12.1"
   }
 }
