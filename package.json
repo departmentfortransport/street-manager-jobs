@@ -23,7 +23,8 @@
     "moment-timezone": "^0.5.28",
     "pg": "^7.18.2",
     "reflect-metadata": "^0.1.13",
-    "street-manager-data": "git+ssh://git@github.com:departmentfortransport/street-manager-data#d86173b7a4d0f237103332d252e59a9f5142a91c"
+    "street-manager-data": "git+ssh://git@github.com:departmentfortransport/street-manager-data#d86173b7a4d0f237103332d252e59a9f5142a91c",
+    "underscore": "^1.13.1"
   },
   "devDependencies": {
     "@types/chai": "^4.2.16",
@@ -39,7 +40,6 @@
     "ts-mockito": "^2.3.1",
     "ts-node": "^7.0.1",
     "tslint": "^6.1.2",
-    "typescript": "^3.8.3",
-    "underscore": "^1.10.2"
+    "typescript": "^3.8.3"
   }
 }
