@@ -1,4 +1,6 @@
-FROM 454455319752.dkr.ecr.eu-west-2.amazonaws.com/nodejs:alpine-3.11_nodejs-12
+ARG JOBS_IMAGE
+
+FROM $JOBS_IMAGE
 
 RUN apk add --no-cache \
       g++ \
