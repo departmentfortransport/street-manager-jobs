@@ -28,6 +28,7 @@ services:
       - PGPASSWORD=${PGPASSWORD}
       - PGKNEXUSER=${PGKNEXUSER}
       - PGKNEXPASSWORD=${PGKNEXPASSWORD}
+      - PGREPORTINGUSER=${PGREPORTINGUSER}
 volumes:
   etc_postgresql:
     driver: local
