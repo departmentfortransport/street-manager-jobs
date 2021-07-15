@@ -23,14 +23,14 @@
     "moment-timezone": "^0.5.33",
     "pg": "^7.18.2",
     "reflect-metadata": "^0.1.13",
-    "street-manager-data": "git+ssh://git@github.com:departmentfortransport/street-manager-data#e4157cdb1b485fe32aa275169de1be64ce36b92b",
+    "street-manager-data": "git+ssh://git@github.com:departmentfortransport/street-manager-data#883e35f385d9e0aaa0c727ab2fcec52a354a3cdd",
     "underscore": "^1.13.1"
   },
   "devDependencies": {
     "@types/chai": "^4.2.19",
     "@types/mocha": "^8.2.2",
     "@types/moment-timezone": "^0.5.12",
-    "@types/node": "^10.12.12",
+    "@types/node": "^16.3.2",
     "@types/sinon": "^10.0.2",
     "chai": "^4.3.4",
     "mocha": "^8.3.2",
