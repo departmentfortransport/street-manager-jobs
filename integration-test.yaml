@@ -3,16 +3,16 @@ services:
   postgres:
     image: ${ECR_URL}/postgres:postgres-10.15-r1
     ports:
-      - "5432:5432"
+      - "${PGPORT}:${PGPORT}"
   jobs:
     image: ${ECR_URL}/jobs:${CIRCLE_SHA1}
     depends_on:
       - db-migrations
     environment:
-      - PGHOST=postgres
-      - PGDATABASE=work
-      - PGUSER=app
-      - PGPASSWORD=app
+      - PGHOST=${PGHOST}
+      - PGDATABASE=${PGDATABASE}
+      - PGUSER=${PGAPPUSER}
+      - PGPASSWORD=${PGAPPPASSWORD}
   db-migrations:
     image: ${ECR_URL}/db-migrations:${DB_MIGRATIONS_IMAGE}
     volumes:
@@ -22,12 +22,13 @@ services:
     depends_on:
       - postgres
     environment:
-      - PGHOST=postgres
-      - PGDATABASE=work
-      - PGUSER=migrator
-      - PGPASSWORD=migrator
-      - PGKNEXUSER=migrator
-      - PGKNEXPASSWORD=migrator
+      - PGHOST=${PGHOST}
+      - PGDATABASE=${PGDATABASE}
+      - PGUSER=${PGUSER}
+      - PGPASSWORD=${PGPASSWORD}
+      - PGKNEXUSER=${PGKNEXUSER}
+      - PGKNEXPASSWORD=${PGKNEXPASSWORD}
+      - PGREPORTINGUSER=${PGREPORTINGUSER}
 volumes:
   etc_postgresql:
     driver: local

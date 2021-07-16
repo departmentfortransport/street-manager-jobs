@@ -6,7 +6,7 @@ aliases:
       export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID_CI_USER_DEV_ACC}"
       export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY_CI_USER_DEV_ACC}"
       TOKEN=$(aws sts assume-role \
-        --role-arn arn:aws:iam::454455319752:role/Dev-Admin \
+        --role-arn arn:aws:iam::${AWS_ACC_ID_DEV}:role/${AWS_ROLE_CI_ADMIN_DEV_ACC} \
         --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
         )
       echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
@@ -89,11 +89,11 @@ aliases:
     command: |
       docker tag ${AWS_ACC_ID_PREPROD}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG} ${AWS_ACC_ID_PROD}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
       docker push ${AWS_ACC_ID_PROD}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/jobs:${CIRCLE_TAG}
-  - &assume_jobs-integration-test_role_dev_account
-    name: Assume jobs-integration-test role on dev account
+  - &assume_integration_test_role_dev_account
+    name: Assume integration tests role on dev account
     command: |
       TOKEN=$(aws sts assume-role \
-        --role-arn arn:aws:iam::454455319752:role/integration-tests-csv-export \
+        --role-arn arn:aws:iam::${AWS_ACC_ID_DEV}:role/${AWS_ROLE_CI_INT_TESTS} \
         --role-session-name "$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 18 ; echo '')"\
         )
       echo "export AWS_ACCESS_KEY_ID=$(echo $TOKEN | python -c 'import json,sys;print json.load(sys.stdin)["Credentials"]["AccessKeyId"]' 2> /dev/null)" >> $BASH_ENV
@@ -118,8 +118,8 @@ aliases:
         chmod 0600 ~/.ssh/id_rsa
         export GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -F /dev/null'
         apk add git openssh-client
-        git config --global user.name streetmanagerops
-        git config --global user.email streetmanagerops@kainos.com
+        git config --global user.name ${GIT_CONFIG_USERNAME}
+        git config --global user.email ${GIT_CONFIG_EMAIL}
         git clone git@github.com:departmentfortransport/street-manager-data.git /tmp/street-manager-data
         cd /tmp/street-manager-data
         git checkout ${CIRCLE_BRANCH} || git checkout master
@@ -146,23 +146,18 @@ aliases:
     command: |
       pip install awscli --upgrade --user
       docker build -t ${ECR_URL}/jobs:${CIRCLE_SHA1} --build-arg JOBS_IMAGE=${JOBS_IMAGE} . --target dependencies --no-cache --pull
-
   - &ecr_login_dev
     name: ECR login Dev
-    command: aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${AWS_ACC_ID_DEV}.dkr.ecr.eu-west-2.amazonaws.com
-
+    command: aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACC_ID_DEV}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
   - &ecr_login_preview
     name: ECR login Preview
-    command: aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${AWS_ACC_ID_PREVIEW}.dkr.ecr.eu-west-2.amazonaws.com
-
+    command: aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACC_ID_PREVIEW}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
   - &ecr_login_preprod
     name: ECR login Preprod
-    command: aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${AWS_ACC_ID_PREPROD}.dkr.ecr.eu-west-2.amazonaws.com
-
+    command: aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACC_ID_PREPROD}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
   - &ecr_login_prod
     name: ECR login Production
-    command: aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${AWS_ACC_ID_PROD}.dkr.ecr.eu-west-2.amazonaws.com
-
+    command: aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACC_ID_PROD}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
   - &prepare_ssh_key
     name: Prepare SSH key
     command: |
@@ -192,7 +187,7 @@ jobs:
       - run: *prepare_ssh_key
       - run: *test
       - run: *assume_dev_admin_role
-      - run: *assume_jobs-integration-test_role_dev_account
+      - run: *assume_integration_test_role_dev_account
       - run: *pull_dependencies_integration_tests
       - run: *run_integration_tests
       - run: *assume_dev_ecr_role

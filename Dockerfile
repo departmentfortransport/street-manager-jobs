@@ -1,4 +1,5 @@
 ARG JOBS_IMAGE
+
 FROM $JOBS_IMAGE AS base
 
 RUN apk upgrade --no-cache && \
